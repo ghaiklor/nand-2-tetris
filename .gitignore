@@ -28,3 +28,4 @@ Temporary Items
 # Nand2Tetris Artifacts
 *.dat
 *.out
+*.hack
