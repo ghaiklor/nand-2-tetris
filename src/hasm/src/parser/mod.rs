@@ -1,35 +1,35 @@
 #[derive(Debug)]
-pub struct AInstruction {
-    pub value: String,
+pub struct AInstruction<'a> {
+    pub value: &'a str,
 }
 
 #[derive(Debug)]
-pub struct CInstruction {
-    pub dest: Option<String>,
-    pub comp: Option<String>,
-    pub jump: Option<String>,
+pub struct CInstruction<'a> {
+    pub dest: Option<&'a str>,
+    pub comp: Option<&'a str>,
+    pub jump: Option<&'a str>,
 }
 
 #[derive(Debug)]
-pub struct LabelInstruction {
-    pub value: String,
+pub struct LabelInstruction<'a> {
+    pub value: &'a str,
     pub ptr: u16,
 }
 
 #[derive(Debug)]
-pub enum Instruction {
-    A(AInstruction),
-    C(CInstruction),
-    Label(LabelInstruction),
+pub enum Instruction<'a> {
+    A(AInstruction<'a>),
+    C(CInstruction<'a>),
+    Label(LabelInstruction<'a>),
 }
 
-pub struct Parser {
+pub struct Parser<'a> {
     source: String,
-    instructions: Vec<Instruction>,
+    instructions: Vec<Instruction<'a>>,
     ip: u16,
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     pub fn new(source: &str) -> Parser {
         Parser {
             source: String::from(source),
@@ -38,7 +38,7 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> &Vec<Instruction> {
+    pub fn parse(&mut self) -> &'a Vec<Instruction> {
         for instruction in self.source.lines() {
             let instruction = instruction.trim().splitn(2, '/').next().unwrap().trim();
 
@@ -49,14 +49,14 @@ impl Parser {
             if instruction.starts_with('@') {
                 self.ip += 1;
                 self.instructions.push(Instruction::A(AInstruction {
-                    value: String::from(&instruction[1..]),
+                    value: &instruction[1..],
                 }));
                 continue;
             };
 
             if instruction.starts_with('(') {
                 self.instructions.push(Instruction::Label(LabelInstruction {
-                    value: String::from(instruction.trim_start_matches('(').trim_end_matches(')')),
+                    value: instruction.trim_start_matches('(').trim_end_matches(')'),
                     ptr: self.ip,
                 }));
                 continue;
@@ -64,26 +64,26 @@ impl Parser {
 
             let dest = if instruction.contains('=') {
                 let parts: Vec<&str> = instruction.split('=').collect();
-                Option::Some(String::from(parts[0]))
+                Option::Some(parts[0])
             } else {
                 Option::None
             };
 
             let jump = if instruction.contains(';') {
                 let parts: Vec<&str> = instruction.split(';').collect();
-                Option::Some(String::from(parts[1]))
+                Option::Some(parts[1])
             } else {
                 Option::None
             };
 
             let comp = if instruction.contains('=') {
                 let parts: Vec<&str> = instruction.split('=').collect();
-                Option::Some(String::from(parts[1]))
+                Option::Some(parts[1])
             } else if instruction.contains(';') {
                 let parts: Vec<&str> = instruction.split(';').collect();
-                Option::Some(String::from(parts[0]))
+                Option::Some(parts[0])
             } else {
-                Option::Some(String::from(instruction))
+                Option::Some(instruction)
             };
 
             self.ip += 1;
