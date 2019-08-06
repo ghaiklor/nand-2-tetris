@@ -55,9 +55,8 @@ impl<'a> SymbolTable<'a> {
             };
         }
 
+        let mut next_address: u16 = 15;
         for instruction in instructions {
-            let mut next_address: u16 = 15;
-
             if let Instruction::A(instruction) = instruction {
                 match instruction.value.parse::<u16>() {
                     Result::Ok(address) => address,
