@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
         "Obrezkov",
+        "canonicalize",
         "ghaiklor",
         "gmail",
-        "hasm"
+        "hasm",
+        "peekable"
     ]
 }
