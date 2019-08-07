@@ -36,7 +36,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# Nand2Tetris Artifacts TODO: remove it when migrate from nand2tetris
+# Nand2Tetris Artifacts
 *.dat
 *.out
 *.hack
