@@ -48,8 +48,8 @@ pub fn parse(source: &str) -> Vec<Instruction> {
         };
 
         let jump = if instruction.contains(';') {
-            let instruction = instruction.split(';').collect::<Vec<&str>>()[1];
-            match instruction {
+            let mnemonic = instruction.split(';').collect::<Vec<&str>>()[1];
+            match mnemonic {
                 "JGT" => CJumpInstruction {
                     greater_than: true,
                     equal: false,
@@ -85,7 +85,7 @@ pub fn parse(source: &str) -> Vec<Instruction> {
                     equal: true,
                     lower_than: true,
                 },
-                _ => panic!("Unknown destination instruction: {}", instruction),
+                _ => panic!("Unknown destination instruction: {}", mnemonic),
             }
         } else {
             CJumpInstruction {

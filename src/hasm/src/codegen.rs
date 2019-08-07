@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 #[allow(clippy::implicit_hasher)]
 pub fn codegen(instructions: &[Instruction], symbol_table: &HashMap<&str, u16>) -> String {
-    let mut machine_code: String = String::new();
+    let mut machine_code = String::new();
 
     for instruction in instructions {
         match instruction {
@@ -12,7 +12,7 @@ pub fn codegen(instructions: &[Instruction], symbol_table: &HashMap<&str, u16>) 
                     AInstruction::Literal(address) => *address,
                     AInstruction::Mnemonic(name) => *symbol_table
                         .get(name)
-                        .unwrap_or_else(|| panic!(format!("Unresolved symbol: {}", name))),
+                        .unwrap_or_else(|| panic!("Unresolved symbol: {}", name)),
                 };
 
                 machine_code.push_str(&format!("{:016b}\n", address));
@@ -58,6 +58,7 @@ pub fn codegen(instructions: &[Instruction], symbol_table: &HashMap<&str, u16>) 
 
                 machine_code.push_str(&format!("111{}{}{}\n", comp, dest, jump));
             }
+
             Instruction::Label(_) => (),
         }
     }
