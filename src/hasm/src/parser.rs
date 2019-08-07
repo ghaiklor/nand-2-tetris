@@ -32,12 +32,12 @@ pub fn parse(source: &str) -> Vec<Instruction> {
         }
 
         let dest = if instruction.contains('=') {
-            let part = instruction.split('=').collect::<Vec<&str>>()[0];
+            let mnemonic = instruction.split('=').nth(0).unwrap();
 
             CDestinationInstruction {
-                ram: part.contains('M'),
-                a_register: part.contains('A'),
-                d_register: part.contains('D'),
+                ram: mnemonic.contains('M'),
+                a_register: mnemonic.contains('A'),
+                d_register: mnemonic.contains('D'),
             }
         } else {
             CDestinationInstruction {
@@ -48,7 +48,7 @@ pub fn parse(source: &str) -> Vec<Instruction> {
         };
 
         let jump = if instruction.contains(';') {
-            let mnemonic = instruction.split(';').collect::<Vec<&str>>()[1];
+            let mnemonic = instruction.split(';').nth(1).unwrap();
             match mnemonic {
                 "JGT" => CJumpInstruction {
                     greater_than: true,
@@ -95,7 +95,14 @@ pub fn parse(source: &str) -> Vec<Instruction> {
             }
         };
 
-        let mnemonic = instruction.trim_start_matches('=').trim_end_matches(';');
+        let mnemonic = if instruction.contains('=') {
+            instruction.split('=').nth(1).unwrap()
+        } else if instruction.contains(';') {
+            instruction.split(';').nth(0).unwrap()
+        } else {
+            instruction
+        };
+
         let comp = match mnemonic {
             "0" => CCompInstruction::Zero,
             "1" => CCompInstruction::One,
