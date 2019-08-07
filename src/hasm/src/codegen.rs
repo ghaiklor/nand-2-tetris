@@ -20,10 +20,16 @@ pub fn codegen(instructions: &[Instruction], symbol_table: &HashMap<&str, u16>) 
 
             Instruction::C(instruction) => {
                 let dest = &instruction.dest;
-                let dest: &str = &format!("{}{}{}", dest.a_register, dest.d_register, dest.ram);
+                let dest: &str = &format!(
+                    "{}{}{}",
+                    dest.a_register as u8, dest.d_register as u8, dest.ram as u8
+                );
 
                 let jump = &instruction.jump;
-                let jump: &str = &format!("{}{}{}", jump.lower_than, jump.equal, jump.greater_than);
+                let jump: &str = &format!(
+                    "{}{}{}",
+                    jump.lower_than as u8, jump.equal as u8, jump.greater_than as u8
+                );
 
                 let comp = match instruction.comp {
                     CCompInstruction::Zero => "0101010",
