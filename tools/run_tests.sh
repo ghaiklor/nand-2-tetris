@@ -19,6 +19,18 @@ function assembly_tests() {
         echo "Running $tst_file in cpu emulator..."
         "$PWD"/tools/cpu_emulator.sh "$tst_file"
     done
+
+    echo "Assembling examples/hasm..."
+    for asm_file in "$PWD"/examples/hasm/*.asm; do
+        echo "Assembling $asm_file..."
+        "$PWD"/tools/assembler.sh "$asm_file"
+    done
+
+    echo "Moving assembled examples/hasm to computer src..."
+    for hack_file in "$PWD"/examples/hasm/*.hack; do
+        echo "Moving $hack_file to computer src..."
+        mv "$hack_file" "$PWD/src/cpu/computer/$(basename "$hack_file")"
+    done
 }
 
 function hardware_tests() {
