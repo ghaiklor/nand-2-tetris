@@ -1,5 +1,11 @@
 # nand-2-tetris
 
+![Travis (.com) branch](https://img.shields.io/travis/com/ghaiklor/nand-2-tetris/master)
+![GitHub](https://img.shields.io/github/license/ghaiklor/nand-2-tetris)
+
+[![GitHub followers](https://img.shields.io/github/followers/ghaiklor.svg?label=Follow&style=social)](https://github.com/ghaiklor)
+[![Twitter Follow](https://img.shields.io/twitter/follow/ghaiklor.svg?label=Follow&style=social)](https://twitter.com/ghaiklor)
+
 _Work is still in progress!_
 
 In this repository, I implement all the tasks from nand2tetris course on Coursera. It contains all the source codes, starting from CPU gates (implemented in HDL language) to high-level language compilers and operating systems.
