@@ -2,4 +2,5 @@
 
 members = [
     "src/hasm",
+    "src/vm"
 ]

@@ -1,0 +1,10 @@
+[package]
+name = "vm"
+description = "Translator from stack virtual machine code to Hack Assembly"
+version = "0.1.0"
+authors = ["Eugene Obrezkov <ghaiklor@gmail.com>"]
+edition = "2018"
+workspace = "../.."
+
+[dependencies]
+clap = "2.33.0"
