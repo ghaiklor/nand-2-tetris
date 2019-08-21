@@ -3,14 +3,14 @@ use crate::opcode::*;
 pub fn parse(vm_code: &str) -> Vec<OpCode> {
     let mut opcodes = Vec::new();
 
-    for operation in vm_code.lines() {
-        let operation = operation.trim().splitn(2, '/').next().unwrap().trim();
-        if operation.is_empty() {
+    for instruction in vm_code.lines() {
+        let instruction = instruction.trim().splitn(2, '/').next().unwrap().trim();
+        if instruction.is_empty() {
             continue;
         }
 
-        if operation.starts_with("push") {
-            let parts: Vec<&str> = operation.splitn(3, ' ').collect();
+        if instruction.starts_with("push") {
+            let parts: Vec<&str> = instruction.splitn(3, ' ').collect();
             let opcode = OpCode::Push(PushOpCode {
                 segment: parts[1],
                 i: parts[2]
@@ -22,8 +22,8 @@ pub fn parse(vm_code: &str) -> Vec<OpCode> {
             continue;
         };
 
-        if operation.starts_with("pop") {
-            let parts: Vec<&str> = operation.splitn(3, ' ').collect();
+        if instruction.starts_with("pop") {
+            let parts: Vec<&str> = instruction.splitn(3, ' ').collect();
             let opcode = OpCode::Pop(PopOpCode {
                 segment: parts[1],
                 i: parts[2]
@@ -35,7 +35,7 @@ pub fn parse(vm_code: &str) -> Vec<OpCode> {
             continue;
         };
 
-        let opcode = match operation {
+        let opcode = match instruction {
             "add" => OpCode::Add,
             "sub" => OpCode::Sub,
             "neg" => OpCode::Neg,
@@ -45,7 +45,7 @@ pub fn parse(vm_code: &str) -> Vec<OpCode> {
             "and" => OpCode::And,
             "or" => OpCode::Or,
             "not" => OpCode::Not,
-            &_ => panic!("Unknown opcode {}", operation),
+            &_ => panic!("Unknown opcode {}", instruction),
         };
 
         opcodes.push(opcode);
