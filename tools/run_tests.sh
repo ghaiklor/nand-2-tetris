@@ -115,7 +115,12 @@ function vm_tests() {
     header "Running tests for $VM_EXAMPLES"
     for tst_file in "$VM_EXAMPLES"/**/*.tst; do
         pending "🕰 Simulating $(basename $tst_file)"
-        "$PROJECT_TOOLS_ROOT"/cpu_emulator.sh "$tst_file" > /dev/null 2>&1
+
+        if [[ $tst_file =~ VME.tst ]]; then
+            "$PROJECT_TOOLS_ROOT"/vm_emulator.sh "$tst_file" > /dev/null 2>&1
+        else
+            "$PROJECT_TOOLS_ROOT"/cpu_emulator.sh "$tst_file" > /dev/null 2>&1
+        fi
     done
 }
 
