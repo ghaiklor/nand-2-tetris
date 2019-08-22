@@ -60,6 +60,14 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Examples of Assembly files hasm can translate](./examples/hasm)
 
+### Project 7: The Virtual Machine
+
+> Java (or C#) compilers generate code written in an intermediate language called bytecode (or IL). This code is designed to run on a virtual machine architecture like the JVM (or CLR). One way to implement such VM programs is to translate them further into lower-level programs written in the machine language of some concrete (rather than virtual) host computer. In projects 7 and 8 we build such a VM translator, designed to translate programs written in the VM language into programs written in the Hack assembly language. The VM language, abstraction, and translation process are described in chapters 7 and 8 of the book. For the purpose of this project, chapter 8 can be ignored.
+
+[Source code for virtual machine code translator](./src/vm)
+
+[Examples of virtual machine code](./examples/vm)
+
 ## License
 
 [MIT License](./LICENSE)
