@@ -14,8 +14,12 @@ PROJECT_ROOT=$PWD
 PROJECT_TOOLS_ROOT=$PROJECT_ROOT/tools
 CPU_EXAMPLES=$PROJECT_ROOT/examples/cpu
 HASM_EXAMPLES=$PROJECT_ROOT/examples/hasm
+VM_EXAMPLES=$PROJECT_ROOT/examples/vm
 CPU_SOURCES=$PROJECT_ROOT/src/cpu
 COMPUTER_SOURCES=$CPU_SOURCES/computer
+
+HASM_EXECUTABLE=$PROJECT_ROOT/target/debug/hasm
+VM_EXECUTABLE=$PROJECT_ROOT/target/debug/vm
 
 SUCCESS_COLOR="\033[32m"
 PENDING_COLOR="\033[33m"
@@ -44,9 +48,10 @@ function failed() {
 # https://github.com/ghaiklor/nand-2-tetris#project-4-machine-language-programming
 function cpu_examples() {
     echo
+
     header "Assembling $CPU_EXAMPLES"
     for asm_file in "$CPU_EXAMPLES"/**/*.asm; do
-        "$PROJECT_TOOLS_ROOT"/assembler.sh "$asm_file"
+        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname $asm_file)/$(basename $asm_file .asm).hack"
         success "🙂 $(basename "$asm_file")"
     done
 
@@ -67,9 +72,10 @@ function cpu_examples() {
 # https://github.com/ghaiklor/nand-2-tetris#project-5-computer-architecture
 function hasm_examples() {
     echo
+
     header "Assembling $HASM_EXAMPLES"
     for asm_file in "$HASM_EXAMPLES"/*.asm; do
-        "$PROJECT_TOOLS_ROOT"/assembler.sh "$asm_file"
+        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname $asm_file)/$(basename $asm_file .asm).hack"
         success "🙂 $(basename "$asm_file")"
     done
 
@@ -96,9 +102,27 @@ function cpu_tests() {
     done
 }
 
+# Running tests for the Project 7
+function vm_tests() {
+    echo
+
+    header "Translating $VM_EXAMPLES"
+    for vm_file in "$VM_EXAMPLES"/**/*.vm; do
+        "$VM_EXECUTABLE" --input "$vm_file" --output "$(dirname $vm_file)/$(basename $vm_file .vm).asm"
+        success "🙂 $(basename "$vm_file")"
+    done
+
+    header "Running tests for $VM_EXAMPLES"
+    for tst_file in "$VM_EXAMPLES"/**/*.tst; do
+        pending "🕰 Simulating $(basename $tst_file)"
+        "$PROJECT_TOOLS_ROOT"/cpu_emulator.sh "$tst_file" > /dev/null 2>&1
+    done
+}
+
 cpu_examples
 hasm_examples
 cpu_tests
+vm_tests
 
 echo
 success "All tests have been passed!"
