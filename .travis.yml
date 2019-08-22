@@ -1,5 +1,5 @@
 language: rust
 rust:
   - stable
-before_script:
+after_script:
   - ./tools/run_tests.sh
