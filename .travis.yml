@@ -1,5 +1,7 @@
 language: rust
 rust:
   - stable
-after_script:
+script:
+  - cargo build --verbose
+  - cargo test --verbose
   - ./tools/run_tests.sh
