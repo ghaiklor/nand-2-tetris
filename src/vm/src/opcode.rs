@@ -1,13 +1,13 @@
 #[derive(Debug)]
 pub struct PushOpCode<'a> {
     pub segment: &'a str,
-    pub i: usize,
+    pub i: u16,
 }
 
 #[derive(Debug)]
 pub struct PopOpCode<'a> {
     pub segment: &'a str,
-    pub i: usize,
+    pub i: u16,
 }
 
 #[derive(Debug)]

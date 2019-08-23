@@ -8,9 +8,9 @@ pub struct Codegen {
 }
 
 impl Codegen {
-    pub fn new(filename: &str) -> Codegen {
+    pub fn new(input_file: &str) -> Codegen {
         Codegen {
-            filename: String::from(Path::new(filename).file_name().unwrap().to_str().unwrap()),
+            filename: String::from(Path::new(input_file).file_name().unwrap().to_str().unwrap()),
             assembly: String::new(),
             label_counter: 0,
         }
@@ -45,112 +45,77 @@ impl Codegen {
         self.emit(&format!("\n// {}", msg));
     }
 
-    fn emit_add(&mut self) {
-        self.emit_comment("add");
-
-        // SP--
+    fn emit_sp_dec(&mut self) {
         self.emit("@SP");
         self.emit("M=M-1");
+    }
 
-        // pop -> D
+    fn emit_sp_inc(&mut self) {
+        self.emit("@SP");
+        self.emit("M=M+1");
+    }
+
+    fn emit_stack_to_d(&mut self) {
         self.emit("@SP");
         self.emit("A=M");
         self.emit("D=M");
+    }
 
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // A = SP
-        self.emit("@SP");
-        self.emit("A=M");
-
-        // x + y -> D
-        self.emit("D=M+D");
-
-        // D -> push
+    fn emit_d_to_stack(&mut self) {
         self.emit("@SP");
         self.emit("A=M");
         self.emit("M=D");
+    }
 
-        // SP++
+    fn emit_d_to_register(&mut self, register: &str) {
+        self.emit(&format!("@{}", register));
+        self.emit("M=D");
+    }
+
+    fn emit_constant_to_d(&mut self, constant: u16) {
+        self.emit(&format!("@{}", constant));
+        self.emit("D=A");
+    }
+
+    fn emit_1_args_computation(&mut self, computation: &str) {
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit(&format!("D={}", computation));
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+    }
+
+    fn emit_2_args_computation(&mut self, computation: &str) {
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit_sp_dec();
         self.emit("@SP");
-        self.emit("M=M+1");
+        self.emit("A=M");
+        self.emit(&format!("D={}", computation));
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+    }
+
+    fn emit_add(&mut self) {
+        self.emit_comment("add");
+        self.emit_2_args_computation("M+D");
     }
 
     fn emit_sub(&mut self) {
         self.emit_comment("sub");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // pop -> D
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // A = SP
-        self.emit("@SP");
-        self.emit("A=M");
-
-        // x - y -> D
-        self.emit("D=M-D");
-
-        // D -> push
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=D");
-
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
+        self.emit_2_args_computation("M-D");
     }
 
     fn emit_neg(&mut self) {
         self.emit_comment("neg");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // pop -> D
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // -x -> D
-        self.emit("D=-D");
-
-        // D -> push
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=D");
-
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
+        self.emit_1_args_computation("-D");
     }
 
     fn emit_eq(&mut self) {
         self.emit_comment("eq");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // D = &SP
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit_sp_dec();
 
         // D = D - &SP
         self.emit("@SP");
@@ -177,28 +142,15 @@ impl Codegen {
             self.filename, self.label_counter
         ));
 
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
-
+        self.emit_sp_inc();
         self.label_counter += 1;
     }
 
     fn emit_gt(&mut self) {
         self.emit_comment("gt");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // D = &SP
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit_sp_dec();
 
         // D = D - &SP
         self.emit("@SP");
@@ -225,28 +177,15 @@ impl Codegen {
             self.filename, self.label_counter
         ));
 
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
-
+        self.emit_sp_inc();
         self.label_counter += 1;
     }
 
     fn emit_lt(&mut self) {
         self.emit_comment("lt");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // D = &SP
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit_sp_dec();
 
         // D = D - &SP
         self.emit("@SP");
@@ -273,102 +212,23 @@ impl Codegen {
             self.filename, self.label_counter
         ));
 
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
-
+        self.emit_sp_inc();
         self.label_counter += 1;
     }
 
     fn emit_and(&mut self) {
         self.emit_comment("and");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // pop -> D
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // A = SP
-        self.emit("@SP");
-        self.emit("A=M");
-
-        // x & y -> D
-        self.emit("D=M&D");
-
-        // D -> push
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=D");
-
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
+        self.emit_2_args_computation("M&D");
     }
 
     fn emit_or(&mut self) {
         self.emit_comment("or");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // pop -> D
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // A = SP
-        self.emit("@SP");
-        self.emit("A=M");
-
-        // x | y -> D
-        self.emit("D=M|D");
-
-        // D -> push
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=D");
-
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
+        self.emit_2_args_computation("M|D");
     }
 
     fn emit_not(&mut self) {
         self.emit_comment("not");
-
-        // SP--
-        self.emit("@SP");
-        self.emit("M=M-1");
-
-        // pop -> D
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M");
-
-        // !x -> D
-        self.emit("D=!D");
-
-        // D -> push
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=D");
-
-        // SP++
-        self.emit("@SP");
-        self.emit("M=M+1");
+        self.emit_1_args_computation("!D");
     }
 
     fn emit_push(&mut self, opcode: &PushOpCode) {
@@ -376,10 +236,6 @@ impl Codegen {
 
         match opcode.segment {
             "local" | "argument" | "this" | "that" => {
-                // D = i
-                self.emit(&format!("@{}", opcode.i));
-                self.emit("D=A");
-
                 let segment = match opcode.segment {
                     "local" => "LCL",
                     "argument" => "ARG",
@@ -388,47 +244,30 @@ impl Codegen {
                     _ => panic!("Unsupported segment name: {}", opcode.segment),
                 };
 
+                // D = i
+                self.emit(&format!("@{}", opcode.i));
+                self.emit("D=A");
+
                 // D = &(@segment + i)
                 self.emit(&format!("@{}", segment));
                 self.emit("A=M+D");
                 self.emit("D=M");
 
-                // D -> push
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("M=D");
-
-                // SP++
-                self.emit("@SP");
-                self.emit("M=M+1");
+                self.emit_d_to_stack();
+                self.emit_sp_inc();
             }
             "constant" => {
-                // D = i
-                self.emit(&format!("@{}", opcode.i));
-                self.emit("D=A");
-
-                // D -> push
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("M=D");
-
-                // SP++
-                self.emit("@SP");
-                self.emit("M=M+1");
+                self.emit_constant_to_d(opcode.i);
+                self.emit_d_to_stack();
+                self.emit_sp_inc();
             }
             "static" => {
                 // D = @<filename>.<i>
                 self.emit(&format!("@{}.{}", &self.filename, opcode.i));
                 self.emit("D=M");
 
-                // D -> push
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("M=D");
-
-                // SP++
-                self.emit("@SP");
-                self.emit("M=M+1");
+                self.emit_d_to_stack();
+                self.emit_sp_inc();
             }
             "temp" => {
                 // D = i
@@ -440,14 +279,8 @@ impl Codegen {
                 self.emit("A=D+A");
                 self.emit("D=M");
 
-                // D -> push
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("M=D");
-
-                // SP++
-                self.emit("@SP");
-                self.emit("M=M+1");
+                self.emit_d_to_stack();
+                self.emit_sp_inc();
             }
             "pointer" => {
                 let offset = match opcode.i {
@@ -460,14 +293,8 @@ impl Codegen {
                 self.emit(&format!("@{}", offset));
                 self.emit("D=M");
 
-                // D -> push
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("M=D");
-
-                // SP++
-                self.emit("@SP");
-                self.emit("M=M+1");
+                self.emit_d_to_stack();
+                self.emit_sp_inc();
             }
             _ => panic!("Unknown segment name: {}", opcode.segment),
         }
@@ -486,22 +313,15 @@ impl Codegen {
                     _ => panic!("Unsupported segment name: {}", opcode.segment),
                 };
 
-                // SP--
-                self.emit("@SP");
-                self.emit("M=M-1");
+                self.emit_sp_dec();
 
                 // R13 = @segment + i
                 self.emit(&format!("@{}", segment));
                 self.emit("D=M");
                 self.emit(&format!("@{}", opcode.i));
                 self.emit("D=D+A");
-                self.emit("@R13");
-                self.emit("M=D");
-
-                // D = &SP
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("D=M");
+                self.emit_d_to_register("R13");
+                self.emit_stack_to_d();
 
                 // &R13 = D
                 self.emit("@R13");
@@ -512,36 +332,23 @@ impl Codegen {
                 panic!("pop constant is not supported");
             }
             "static" => {
-                // SP--
-                self.emit("@SP");
-                self.emit("M=M-1");
-
-                // D = &SP
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("D=M");
+                self.emit_sp_dec();
+                self.emit_stack_to_d();
 
                 // @<filename>.<i> = D
                 self.emit(&format!("@{}.{}", &self.filename, opcode.i));
                 self.emit("M=D");
             }
             "temp" => {
-                // SP--
-                self.emit("@SP");
-                self.emit("M=M-1");
+                self.emit_sp_dec();
 
                 // R13 = 5 + i
                 self.emit(&format!("@{}", 5));
                 self.emit("D=A");
                 self.emit(&format!("@{}", opcode.i));
                 self.emit("D=D+A");
-                self.emit("@R13");
-                self.emit("M=D");
-
-                // D = &SP
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("D=M");
+                self.emit_d_to_register("R13");
+                self.emit_stack_to_d();
 
                 // &R13 = D
                 self.emit("@R13");
@@ -555,14 +362,8 @@ impl Codegen {
                     _ => panic!("Unknown pointer offset: {}", opcode.i),
                 };
 
-                // SP--
-                self.emit("@SP");
-                self.emit("M=M-1");
-
-                // D = &SP
-                self.emit("@SP");
-                self.emit("A=M");
-                self.emit("D=M");
+                self.emit_sp_dec();
+                self.emit_stack_to_d();
 
                 // THIS/THAT = D
                 self.emit(&format!("@{}", offset));
