@@ -19,15 +19,15 @@ impl Codegen {
     pub fn codegen(&mut self, opcodes: &[OpCode]) -> String {
         for opcode in opcodes {
             match opcode {
-                OpCode::Add => self.emit_add(),
-                OpCode::Sub => self.emit_sub(),
-                OpCode::Neg => self.emit_neg(),
-                OpCode::Eq => self.emit_eq(),
-                OpCode::Gt => self.emit_gt(),
-                OpCode::Lt => self.emit_lt(),
-                OpCode::And => self.emit_and(),
-                OpCode::Or => self.emit_or(),
-                OpCode::Not => self.emit_not(),
+                OpCode::Add => self.emit_2_args_computation("M+D", "add"),
+                OpCode::Sub => self.emit_2_args_computation("M-D", "sub"),
+                OpCode::Neg => self.emit_1_args_computation("-D", "neg"),
+                OpCode::Eq => self.emit_comparable_computation("JEQ", "eq"),
+                OpCode::Gt => self.emit_comparable_computation("JGT", "gt"),
+                OpCode::Lt => self.emit_comparable_computation("JLT", "lt"),
+                OpCode::And => self.emit_2_args_computation("M&D", "and"),
+                OpCode::Or => self.emit_2_args_computation("M|D", "or"),
+                OpCode::Not => self.emit_1_args_computation("!D", "not"),
                 OpCode::Push(opcode) => self.emit_push(opcode),
                 OpCode::Pop(opcode) => self.emit_pop(opcode),
             };
@@ -77,7 +77,8 @@ impl Codegen {
         self.emit("D=A");
     }
 
-    fn emit_1_args_computation(&mut self, computation: &str) {
+    fn emit_1_args_computation(&mut self, computation: &str, comment: &str) {
+        self.emit_comment(comment);
         self.emit_sp_dec();
         self.emit_stack_to_d();
         self.emit(&format!("D={}", computation));
@@ -85,7 +86,8 @@ impl Codegen {
         self.emit_sp_inc();
     }
 
-    fn emit_2_args_computation(&mut self, computation: &str) {
+    fn emit_2_args_computation(&mut self, computation: &str, comment: &str) {
+        self.emit_comment(comment);
         self.emit_sp_dec();
         self.emit_stack_to_d();
         self.emit_sp_dec();
@@ -96,139 +98,38 @@ impl Codegen {
         self.emit_sp_inc();
     }
 
-    fn emit_add(&mut self) {
-        self.emit_comment("add");
-        self.emit_2_args_computation("M+D");
-    }
-
-    fn emit_sub(&mut self) {
-        self.emit_comment("sub");
-        self.emit_2_args_computation("M-D");
-    }
-
-    fn emit_neg(&mut self) {
-        self.emit_comment("neg");
-        self.emit_1_args_computation("-D");
-    }
-
-    fn emit_eq(&mut self) {
-        self.emit_comment("eq");
+    fn emit_comparable_computation(&mut self, comparator: &str, comment: &str) {
+        self.emit_2_args_computation("M-D", comment);
         self.emit_sp_dec();
         self.emit_stack_to_d();
-        self.emit_sp_dec();
 
-        // D = D - &SP
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M-D");
-
-        // JEQ M-D
-        self.emit(&format!("@__EQ_{}_{}", self.filename, self.label_counter));
-        self.emit("D;JEQ");
+        self.emit(&format!(
+            "@__{}_{}_{}",
+            comparator, self.filename, self.label_counter
+        ));
+        self.emit(&format!("D;{}", comparator));
         self.emit("@SP");
         self.emit("A=M");
         self.emit("M=0");
         self.emit(&format!(
-            "@__END_EQ_{}_{}",
-            self.filename, self.label_counter
+            "@__END_{}_{}_{}",
+            comparator, self.filename, self.label_counter
         ));
         self.emit("0;JMP");
-        self.emit(&format!("(__EQ_{}_{})", self.filename, self.label_counter));
+        self.emit(&format!(
+            "(__{}_{}_{})",
+            comparator, self.filename, self.label_counter
+        ));
         self.emit("@SP");
         self.emit("A=M");
         self.emit("M=-1");
         self.emit(&format!(
-            "(__END_EQ_{}_{})",
-            self.filename, self.label_counter
+            "(__END_{}_{}_{})",
+            comparator, self.filename, self.label_counter
         ));
 
         self.emit_sp_inc();
         self.label_counter += 1;
-    }
-
-    fn emit_gt(&mut self) {
-        self.emit_comment("gt");
-        self.emit_sp_dec();
-        self.emit_stack_to_d();
-        self.emit_sp_dec();
-
-        // D = D - &SP
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M-D");
-
-        // JGT M-D
-        self.emit(&format!("@__GT_{}_{}", self.filename, self.label_counter));
-        self.emit("D;JGT");
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=0");
-        self.emit(&format!(
-            "@__END_GT_{}_{}",
-            self.filename, self.label_counter
-        ));
-        self.emit("0;JMP");
-        self.emit(&format!("(__GT_{}_{})", self.filename, self.label_counter));
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=-1");
-        self.emit(&format!(
-            "(__END_GT_{}_{})",
-            self.filename, self.label_counter
-        ));
-
-        self.emit_sp_inc();
-        self.label_counter += 1;
-    }
-
-    fn emit_lt(&mut self) {
-        self.emit_comment("lt");
-        self.emit_sp_dec();
-        self.emit_stack_to_d();
-        self.emit_sp_dec();
-
-        // D = D - &SP
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("D=M-D");
-
-        // JLT M-D
-        self.emit(&format!("@__LT_{}_{}", self.filename, self.label_counter));
-        self.emit("D;JLT");
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=0");
-        self.emit(&format!(
-            "@__END_LT_{}_{}",
-            self.filename, self.label_counter
-        ));
-        self.emit("0;JMP");
-        self.emit(&format!("(__LT_{}_{})", self.filename, self.label_counter));
-        self.emit("@SP");
-        self.emit("A=M");
-        self.emit("M=-1");
-        self.emit(&format!(
-            "(__END_LT_{}_{})",
-            self.filename, self.label_counter
-        ));
-
-        self.emit_sp_inc();
-        self.label_counter += 1;
-    }
-
-    fn emit_and(&mut self) {
-        self.emit_comment("and");
-        self.emit_2_args_computation("M&D");
-    }
-
-    fn emit_or(&mut self) {
-        self.emit_comment("or");
-        self.emit_2_args_computation("M|D");
-    }
-
-    fn emit_not(&mut self) {
-        self.emit_comment("not");
-        self.emit_1_args_computation("!D");
     }
 
     fn emit_push(&mut self, opcode: &PushOpCode) {
