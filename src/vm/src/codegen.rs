@@ -67,9 +67,14 @@ impl Codegen {
         self.emit("M=D");
     }
 
-    fn emit_d_to_register(&mut self, register: &str) {
-        self.emit(&format!("@{}", register));
+    fn emit_d_to_address(&mut self, address: &str) {
+        self.emit(&format!("@{}", address));
         self.emit("M=D");
+    }
+
+    fn emit_address_to_d(&mut self, address: &str) {
+        self.emit(&format!("@{}", address));
+        self.emit("D=M");
     }
 
     fn emit_constant_to_d(&mut self, constant: u16) {
@@ -145,15 +150,11 @@ impl Codegen {
                     _ => panic!("Unsupported segment name: {}", opcode.segment),
                 };
 
-                // D = i
-                self.emit(&format!("@{}", opcode.i));
-                self.emit("D=A");
-
                 // D = &(@segment + i)
+                self.emit_constant_to_d(opcode.i);
                 self.emit(&format!("@{}", segment));
                 self.emit("A=M+D");
                 self.emit("D=M");
-
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
             }
@@ -166,20 +167,15 @@ impl Codegen {
                 // D = @<filename>.<i>
                 self.emit(&format!("@{}.{}", &self.filename, opcode.i));
                 self.emit("D=M");
-
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
             }
             "temp" => {
-                // D = i
-                self.emit(&format!("@{}", opcode.i));
-                self.emit("D=A");
-
                 // D = &(i + 5)
+                self.emit_constant_to_d(opcode.i);
                 self.emit(&format!("@{}", 5));
                 self.emit("A=D+A");
                 self.emit("D=M");
-
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
             }
@@ -190,10 +186,8 @@ impl Codegen {
                     _ => panic!("Unknown pointer offset: {}", opcode.i),
                 };
 
-                // D = THIS/THAT
                 self.emit(&format!("@{}", offset));
                 self.emit("D=M");
-
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
             }
@@ -214,17 +208,15 @@ impl Codegen {
                     _ => panic!("Unsupported segment name: {}", opcode.segment),
                 };
 
-                self.emit_sp_dec();
-
                 // R13 = @segment + i
-                self.emit(&format!("@{}", segment));
-                self.emit("D=M");
+                self.emit_address_to_d(segment);
                 self.emit(&format!("@{}", opcode.i));
                 self.emit("D=D+A");
-                self.emit_d_to_register("R13");
-                self.emit_stack_to_d();
+                self.emit_d_to_address("R13");
 
                 // &R13 = D
+                self.emit_sp_dec();
+                self.emit_stack_to_d();
                 self.emit("@R13");
                 self.emit("A=M");
                 self.emit("M=D");
@@ -241,17 +233,15 @@ impl Codegen {
                 self.emit("M=D");
             }
             "temp" => {
-                self.emit_sp_dec();
-
                 // R13 = 5 + i
-                self.emit(&format!("@{}", 5));
-                self.emit("D=A");
+                self.emit_constant_to_d(5);
                 self.emit(&format!("@{}", opcode.i));
                 self.emit("D=D+A");
-                self.emit_d_to_register("R13");
-                self.emit_stack_to_d();
+                self.emit_d_to_address("R13");
 
                 // &R13 = D
+                self.emit_sp_dec();
+                self.emit_stack_to_d();
                 self.emit("@R13");
                 self.emit("A=M");
                 self.emit("M=D");
@@ -265,8 +255,6 @@ impl Codegen {
 
                 self.emit_sp_dec();
                 self.emit_stack_to_d();
-
-                // THIS/THAT = D
                 self.emit(&format!("@{}", offset));
                 self.emit("M=D");
             }
