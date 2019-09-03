@@ -102,7 +102,7 @@ function cpu_tests() {
     done
 }
 
-# Running tests for the Project 7
+# Running tests for the Project 7, 8
 function vm_tests() {
     echo
 

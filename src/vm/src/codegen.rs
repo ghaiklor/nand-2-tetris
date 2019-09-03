@@ -30,6 +30,9 @@ impl Codegen {
                 OpCode::Not => self.emit_1_args_computation("!D", "not"),
                 OpCode::Push(opcode) => self.emit_push(opcode),
                 OpCode::Pop(opcode) => self.emit_pop(opcode),
+                OpCode::Label(opcode) => self.emit_label(opcode.id),
+                OpCode::Goto(opcode) => self.emit_goto(opcode.id),
+                OpCode::IfGoto(opcode) => self.emit_if_goto(opcode.id),
             };
         }
 
@@ -80,6 +83,25 @@ impl Codegen {
     fn emit_constant_to_d(&mut self, constant: u16) {
         self.emit(&format!("@{}", constant));
         self.emit("D=A");
+    }
+
+    fn emit_label(&mut self, id: &str) {
+        self.emit_comment(&format!("label {}", id));
+        self.emit(&format!("({})", id));
+    }
+
+    fn emit_goto(&mut self, id: &str) {
+        self.emit_comment(&format!("goto {}", id));
+        self.emit(&format!("@{}", id));
+        self.emit("0;JMP");
+    }
+
+    fn emit_if_goto(&mut self, id: &str) {
+        self.emit_comment(&format!("if-goto {}", id));
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit(&format!("@{}", id));
+        self.emit("D;JNE");
     }
 
     fn emit_1_args_computation(&mut self, computation: &str, comment: &str) {

@@ -35,6 +35,30 @@ pub fn parse(vm_code: &str) -> Vec<OpCode> {
             continue;
         };
 
+        if instruction.starts_with("goto") {
+            let parts: Vec<&str> = instruction.splitn(2, ' ').collect();
+            let opcode = OpCode::Goto(GotoOpCode { id: parts[1] });
+
+            opcodes.push(opcode);
+            continue;
+        }
+
+        if instruction.starts_with("if-goto") {
+            let parts: Vec<&str> = instruction.splitn(2, ' ').collect();
+            let opcode = OpCode::IfGoto(IfGotoOpCode { id: parts[1] });
+
+            opcodes.push(opcode);
+            continue;
+        }
+
+        if instruction.starts_with("label") {
+            let parts: Vec<&str> = instruction.splitn(2, ' ').collect();
+            let opcode = OpCode::Label(LabelOpCode { id: parts[1] });
+
+            opcodes.push(opcode);
+            continue;
+        }
+
         let opcode = match instruction {
             "add" => OpCode::Add,
             "sub" => OpCode::Sub,

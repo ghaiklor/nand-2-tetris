@@ -11,6 +11,21 @@ pub struct PopOpCode<'a> {
 }
 
 #[derive(Debug)]
+pub struct LabelOpCode<'a> {
+    pub id: &'a str,
+}
+
+#[derive(Debug)]
+pub struct GotoOpCode<'a> {
+    pub id: &'a str,
+}
+
+#[derive(Debug)]
+pub struct IfGotoOpCode<'a> {
+    pub id: &'a str,
+}
+
+#[derive(Debug)]
 pub enum OpCode<'a> {
     Add,
     Sub,
@@ -23,4 +38,7 @@ pub enum OpCode<'a> {
     Not,
     Push(PushOpCode<'a>),
     Pop(PopOpCode<'a>),
+    Label(LabelOpCode<'a>),
+    Goto(GotoOpCode<'a>),
+    IfGoto(IfGotoOpCode<'a>),
 }
