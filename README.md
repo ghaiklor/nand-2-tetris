@@ -68,6 +68,14 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Examples of virtual machine code](./examples/vm)
 
+### Project 8: The Virtual Machine II
+
+> We continue building the VM translator - a program that translates programs written in the VM language into programs written in the Hack machine language. This is a respectable chunk of engineering, so we are doing it in two stages. Welcome to stage II.
+
+[Source code for virtual machine code translator](./src/vm)
+
+[Examples of virtual machine code](./examples/vm)
+
 ## License
 
 [MIT License](./LICENSE)
