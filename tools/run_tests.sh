@@ -51,7 +51,7 @@ function cpu_examples() {
 
     header "Assembling $CPU_EXAMPLES"
     for asm_file in "$CPU_EXAMPLES"/**/*.asm; do
-        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname $asm_file)/$(basename $asm_file .asm).hack"
+        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname "$asm_file")/$(basename "$asm_file" .asm).hack"
         success "🙂 $(basename "$asm_file")"
     done
 
@@ -64,7 +64,7 @@ function cpu_examples() {
         fi
 
         "$PROJECT_TOOLS_ROOT"/cpu_emulator.sh "$tst_file" > /dev/null 2>&1
-        success "🙂 $(basename $tst_file)"
+        success "🙂 $(basename "$tst_file")"
     done
 }
 
@@ -75,7 +75,7 @@ function hasm_examples() {
 
     header "Assembling $HASM_EXAMPLES"
     for asm_file in "$HASM_EXAMPLES"/*.asm; do
-        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname $asm_file)/$(basename $asm_file .asm).hack"
+        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname "$asm_file")/$(basename "$asm_file" .asm).hack"
         success "🙂 $(basename "$asm_file")"
     done
 
@@ -97,7 +97,7 @@ function cpu_tests() {
             continue
         fi
 
-        pending "🕰 Simulating $(basename $tst_file)"
+        pending "🕰 Simulating $(basename "$tst_file")"
         "$PROJECT_TOOLS_ROOT"/hardware_simulator.sh "$tst_file" > /dev/null 2>&1
     done
 }
@@ -109,19 +109,31 @@ function vm_tests() {
     header "Translating $VM_EXAMPLES"
     for vm_file in "$VM_EXAMPLES"/**/*.vm; do
         # These are the cases when we need to translate the whole directory
-        if [[ $(dirname $vm_file) =~ FibonacciElement ]]; then
-            "$VM_EXECUTABLE" --input "$(dirname $vm_file)" --output "$(dirname $vm_file)/FibonacciElement.asm"
+        if [[ $(dirname "$vm_file") =~ FibonacciElement ]]; then
+            "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/FibonacciElement.asm"
             success "🙂 $(basename "$vm_file")"
             continue
         fi
 
-        "$VM_EXECUTABLE" --input "$vm_file" --output "$(dirname $vm_file)/$(basename $vm_file .vm).asm"
+        if [[ $(dirname "$vm_file") =~ NestedCall ]]; then
+            "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/NestedCall.asm"
+            success "🙂 $(basename "$vm_file")"
+            continue
+        fi
+
+        if [[ $(dirname "$vm_file") =~ StaticsTest ]]; then
+            "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/StaticsTest.asm"
+            success "🙂 $(basename "$vm_file")"
+            continue
+        fi
+
+        "$VM_EXECUTABLE" --input "$vm_file" --output "$(dirname "$vm_file")/$(basename "$vm_file" .vm).asm"
         success "🙂 $(basename "$vm_file")"
     done
 
     header "Running tests for $VM_EXAMPLES"
     for tst_file in "$VM_EXAMPLES"/**/*.tst; do
-        pending "🕰 Simulating $(basename $tst_file)"
+        pending "🕰 Simulating $(basename "$tst_file")"
 
         if [[ $tst_file =~ VME.tst ]]; then
             "$PROJECT_TOOLS_ROOT"/vm_emulator.sh "$tst_file" > /dev/null 2>&1

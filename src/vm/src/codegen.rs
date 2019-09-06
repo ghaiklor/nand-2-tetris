@@ -300,7 +300,7 @@ impl Codegen {
 
     fn emit_function(&mut self, opcode: &FunctionOpCode) {
         self.emit_comment(&format!("function {} {}", opcode.id, opcode.vars_count));
-        self.emit_label(&format!("__CALL__{}__{}__", opcode.id, opcode.vars_count));
+        self.emit_label(&format!("__CALL__{}__", opcode.id));
 
         let mut vars_count = opcode.vars_count;
         while vars_count > 0 {
@@ -317,8 +317,8 @@ impl Codegen {
 
         // store return address
         self.emit(&format!(
-            "@__CALL__{}__{}__RET__",
-            opcode.id, opcode.args_count
+            "@__CALL__{}__{}__RET",
+            opcode.id, self.label_counter
         ));
         self.emit("D=A");
         self.emit_d_to_stack();
@@ -351,21 +351,27 @@ impl Codegen {
         self.emit_d_to_address("LCL");
 
         // finally, jump to the function
-        self.emit(&format!("@__CALL__{}__{}__", opcode.id, opcode.args_count));
+        self.emit(&format!("@__CALL__{}__", opcode.id));
         self.emit("0;JMP");
 
         self.emit_label(&format!(
-            "__CALL__{}__{}__RET__",
-            opcode.id, opcode.args_count
+            "__CALL__{}__{}__RET",
+            opcode.id, self.label_counter
         ));
+
+        self.label_counter += 1;
     }
 
     fn emit_return(&mut self) {
         self.emit_comment("return");
 
-        // store the address of end frame
+        // store the address of end frame and return address
         self.emit_address_to_d("LCL");
         self.emit_d_to_address("R13");
+        self.emit("@5");
+        self.emit("A=D-A");
+        self.emit("D=M");
+        self.emit_d_to_address("R14");
 
         // pop the return value to start frame
         self.emit_sp_dec();
@@ -413,9 +419,7 @@ impl Codegen {
         self.emit("M=D");
 
         // jump to return address
-        self.emit_address_to_d("R13");
-        self.emit("@5");
-        self.emit("D=D-A");
+        self.emit_address_to_d("R14");
         self.emit("A=D");
         self.emit("0;JMP");
     }
