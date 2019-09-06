@@ -28,13 +28,27 @@ impl Codegen {
                 OpCode::And => self.emit_2_args_computation("M&D", "and"),
                 OpCode::Or => self.emit_2_args_computation("M|D", "or"),
                 OpCode::Not => self.emit_1_args_computation("!D", "not"),
+                OpCode::Return => self.emit_return(),
                 OpCode::Push(opcode) => self.emit_push(opcode),
                 OpCode::Pop(opcode) => self.emit_pop(opcode),
                 OpCode::Label(opcode) => self.emit_label(opcode.id),
                 OpCode::Goto(opcode) => self.emit_goto(opcode.id),
                 OpCode::IfGoto(opcode) => self.emit_if_goto(opcode.id),
+                OpCode::Function(opcode) => self.emit_function(opcode),
+                OpCode::Call(opcode) => self.emit_call(opcode),
             };
         }
+
+        String::from(&self.assembly)
+    }
+
+    pub fn emit_entry(&mut self) -> String {
+        self.emit_constant_to_d(256);
+        self.emit_d_to_address("SP");
+        self.emit_call(&CallOpCode {
+            id: "Sys.init",
+            args_count: 0,
+        });
 
         String::from(&self.assembly)
     }
@@ -282,5 +296,127 @@ impl Codegen {
             }
             _ => panic!("Unknown segment name: {}", opcode.segment),
         }
+    }
+
+    fn emit_function(&mut self, opcode: &FunctionOpCode) {
+        self.emit_comment(&format!("function {} {}", opcode.id, opcode.vars_count));
+        self.emit_label(&format!("__CALL__{}__{}__", opcode.id, opcode.vars_count));
+
+        let mut vars_count = opcode.vars_count;
+        while vars_count > 0 {
+            self.emit_constant_to_d(0);
+            self.emit_d_to_stack();
+            self.emit_sp_inc();
+
+            vars_count -= 1;
+        }
+    }
+
+    fn emit_call(&mut self, opcode: &CallOpCode) {
+        self.emit_comment(&format!("call {} {}", opcode.id, opcode.args_count));
+
+        // store return address
+        self.emit(&format!(
+            "@__CALL__{}__{}__RET__",
+            opcode.id, opcode.args_count
+        ));
+        self.emit("D=A");
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+
+        // store call frame
+        self.emit_address_to_d("LCL");
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+        self.emit_address_to_d("ARG");
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+        self.emit_address_to_d("THIS");
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+        self.emit_address_to_d("THAT");
+        self.emit_d_to_stack();
+        self.emit_sp_inc();
+
+        // calculate ARG
+        self.emit_address_to_d("SP");
+        self.emit("@5");
+        self.emit("D=D-A");
+        self.emit(&format!("@{}", opcode.args_count));
+        self.emit("D=D-A");
+        self.emit_d_to_address("ARG");
+
+        // reposition LCL
+        self.emit_address_to_d("SP");
+        self.emit_d_to_address("LCL");
+
+        // finally, jump to the function
+        self.emit(&format!("@__CALL__{}__{}__", opcode.id, opcode.args_count));
+        self.emit("0;JMP");
+
+        self.emit_label(&format!(
+            "__CALL__{}__{}__RET__",
+            opcode.id, opcode.args_count
+        ));
+    }
+
+    fn emit_return(&mut self) {
+        self.emit_comment("return");
+
+        // store the address of end frame
+        self.emit_address_to_d("LCL");
+        self.emit_d_to_address("R13");
+
+        // pop the return value to start frame
+        self.emit_sp_dec();
+        self.emit_stack_to_d();
+        self.emit("@ARG");
+        self.emit("A=M");
+        self.emit("M=D");
+
+        // reposition SP
+        self.emit("@ARG");
+        self.emit("D=M+1");
+        self.emit_d_to_address("SP");
+
+        // restore the call frame
+        self.emit_address_to_d("R13");
+        self.emit("@1");
+        self.emit("D=D-A");
+        self.emit("A=D");
+        self.emit("D=M");
+        self.emit("@THAT");
+        self.emit("M=D");
+
+        self.emit_address_to_d("R13");
+        self.emit("@2");
+        self.emit("D=D-A");
+        self.emit("A=D");
+        self.emit("D=M");
+        self.emit("@THIS");
+        self.emit("M=D");
+
+        self.emit_address_to_d("R13");
+        self.emit("@3");
+        self.emit("D=D-A");
+        self.emit("A=D");
+        self.emit("D=M");
+        self.emit("@ARG");
+        self.emit("M=D");
+
+        self.emit_address_to_d("R13");
+        self.emit("@4");
+        self.emit("D=D-A");
+        self.emit("A=D");
+        self.emit("D=M");
+        self.emit("@LCL");
+        self.emit("M=D");
+
+        // jump to return address
+        self.emit_address_to_d("R13");
+        self.emit("@5");
+        self.emit("D=D-A");
+        self.emit("A=D");
+        self.emit("0;JMP");
     }
 }

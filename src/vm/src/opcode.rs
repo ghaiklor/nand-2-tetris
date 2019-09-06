@@ -26,6 +26,18 @@ pub struct IfGotoOpCode<'a> {
 }
 
 #[derive(Debug)]
+pub struct FunctionOpCode<'a> {
+    pub id: &'a str,
+    pub vars_count: u16,
+}
+
+#[derive(Debug)]
+pub struct CallOpCode<'a> {
+    pub id: &'a str,
+    pub args_count: u16,
+}
+
+#[derive(Debug)]
 pub enum OpCode<'a> {
     Add,
     Sub,
@@ -36,9 +48,12 @@ pub enum OpCode<'a> {
     And,
     Or,
     Not,
+    Return,
     Push(PushOpCode<'a>),
     Pop(PopOpCode<'a>),
     Label(LabelOpCode<'a>),
     Goto(GotoOpCode<'a>),
     IfGoto(IfGotoOpCode<'a>),
+    Function(FunctionOpCode<'a>),
+    Call(CallOpCode<'a>),
 }

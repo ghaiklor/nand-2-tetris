@@ -59,6 +59,28 @@ pub fn parse(vm_code: &str) -> Vec<OpCode> {
             continue;
         }
 
+        if instruction.starts_with("function") {
+            let parts: Vec<&str> = instruction.splitn(3, ' ').collect();
+            let opcode = OpCode::Function(FunctionOpCode {
+                id: parts[1],
+                vars_count: parts[2].parse().expect("Number of variables expected"),
+            });
+
+            opcodes.push(opcode);
+            continue;
+        }
+
+        if instruction.starts_with("call") {
+            let parts: Vec<&str> = instruction.splitn(3, ' ').collect();
+            let opcode = OpCode::Call(CallOpCode {
+                id: parts[1],
+                args_count: parts[2].parse().expect("Number of arguments expected"),
+            });
+
+            opcodes.push(opcode);
+            continue;
+        }
+
         let opcode = match instruction {
             "add" => OpCode::Add,
             "sub" => OpCode::Sub,
@@ -69,6 +91,7 @@ pub fn parse(vm_code: &str) -> Vec<OpCode> {
             "and" => OpCode::And,
             "or" => OpCode::Or,
             "not" => OpCode::Not,
+            "return" => OpCode::Return,
             &_ => panic!("Unknown opcode {}", instruction),
         };
 

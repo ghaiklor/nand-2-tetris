@@ -108,6 +108,13 @@ function vm_tests() {
 
     header "Translating $VM_EXAMPLES"
     for vm_file in "$VM_EXAMPLES"/**/*.vm; do
+        # These are the cases when we need to translate the whole directory
+        if [[ $(dirname $vm_file) =~ FibonacciElement ]]; then
+            "$VM_EXECUTABLE" --input "$(dirname $vm_file)" --output "$(dirname $vm_file)/FibonacciElement.asm"
+            success "🙂 $(basename "$vm_file")"
+            continue
+        fi
+
         "$VM_EXECUTABLE" --input "$vm_file" --output "$(dirname $vm_file)/$(basename $vm_file .vm).asm"
         success "🙂 $(basename "$vm_file")"
     done
