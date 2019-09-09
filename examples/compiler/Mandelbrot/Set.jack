@@ -1,0 +1,154 @@
+class Set {
+    static Array bitMasks;
+
+    field int maxValue;
+    field int maxIterations;
+    field int width;
+    field int height;
+
+    /**
+     * Due to the nature of Jack compiler
+     * I was forced to "mangle" the arguments names, sorry
+     */
+    constructor Set new(int mxValue, int mxIterations, int wdth, int hght) {
+        var int i, j;
+
+        let maxValue = mxValue;
+        let maxIterations = mxIterations;
+        let width = wdth;
+        let height = hght;
+
+        let bitMasks = Array.new(16);
+        let j = 1;
+        let i = 0;
+        while (i < 16) {
+            let bitMasks[i] = j;
+            let j = j + j;
+            let i = i + 1;
+        }
+
+        return this;
+    }
+
+    /**
+     * I'm using Escape Algorithm here.
+     * The idea behind the algorithm is to compute the sequence of numbers
+     * from the definition of Mandelbrot set iteratively
+     * until a certain predefined maximum norm is reached
+     * or we have reached some predefined maximum number of iterations.
+     *
+     * @see https://en.wikipedia.org/wiki/Mandelbrot_set#Escape_time_algorithm
+     */
+    method int getEscapeIterationsNumber(int pointX, int pointY) {
+        var int currentIteration, x, y;
+        var int xOfSquare, yOfSquare;
+
+        let currentIteration = 0;
+        let x = 0;
+        let y = 0;
+
+        while ((currentIteration < maxIterations) & (x * x + y * y < maxValue)) {
+            let xOfSquare = x * x - y * y;
+            let yOfSquare = 2 * x * y;
+            let x = xOfSquare + pointX;
+            let y = yOfSquare + pointY;
+            let currentIteration = currentIteration + 1;
+        }
+
+        return currentIteration;
+    }
+
+    /**
+     * Still, we need to compute the color of the iteration.
+     * It is simple, we just need to spread the spectrum between "black" and "white".
+     */
+    method int getColorForIteration(int iterationNumber) {
+        if (iterationNumber > (maxIterations / 2)) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * The method we will be using for calculating the color for specific coordinate.
+     */
+    method int getColorForCoordinates(int x, int y) {
+        return getColorForIteration(getEscapeIterationsNumber(x, y));
+    }
+
+    /**
+     * The method for drawing pixel itself.
+     * Why moving out in separate method?
+     * Well, OS implementation of drawPixel is slow for our case.
+     * In future, it can be optimized somehow, but I didn't figure it out yet?
+     */
+    method void drawPixel(int x, int y, int color) {
+        var int a, d;
+
+        let a = 16384 + (y * 32) + (x / 16);
+        let d = x - (x / 16 * 16);
+
+        if (color) {
+            do Memory.poke(a, Memory.peek(a) | bitMasks[d]);
+        } else {
+            do Memory.poke(a, Memory.peek(a) & ~bitMasks[d]);
+        }
+
+        return;
+    }
+
+    /**
+     * The actual drawing of the set on the screen.
+     * Nothing complex here, just iterating over coordinates
+     * and calculating the color (black/white) for each of them.
+     */
+    method void draw() {
+        var int x, y;
+
+        let x = 0;
+        let y = 0;
+
+        while (y < height) {
+            while (x < width) {
+                do drawPixel(x, y, getColorForCoordinates(x, y));
+                let x = x + 1;
+            }
+
+            let x = 0;
+            let y = y + 1;
+        }
+
+        return;
+    }
+
+    /**
+     * Methods below are just for interaction.
+     * They are used to change the coefficients in the set.
+     */
+    method void incMaxIterations() {
+        let maxIterations = maxIterations + 1;
+        return;
+    }
+
+    method void decMaxIterations() {
+        let maxIterations = maxIterations - 1;
+        return;
+    }
+
+    method void incMaxValue() {
+        let maxValue = maxValue + 1;
+        return;
+    }
+
+    method void decMaxValue() {
+        let maxValue = maxValue - 1;
+        return;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+
+        return;
+    }
+}

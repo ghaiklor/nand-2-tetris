@@ -1,0 +1,45 @@
+class Main {
+    function void main() {
+        var Set set;
+        var char key;
+        var boolean exit;
+
+        let set = Set.new(4, 2, 512, 256);
+        let exit = false;
+
+        do set.draw();
+        while (~exit) {
+            while (key = 0) {
+                let key = Keyboard.keyPressed();
+            }
+
+            if (key = 81) {
+                let exit = true;
+            }
+
+            if (key = 130) {
+                do set.incMaxValue();
+            }
+
+            if (key = 131) {
+                do set.incMaxIterations();
+            }
+
+            if (key = 132) {
+                do set.decMaxValue();
+            }
+
+            if (key = 133) {
+                do set.decMaxIterations();
+            }
+
+            while (~(key = 0)) {
+                let key = Keyboard.keyPressed();
+                do Screen.clearScreen();
+                do set.draw();
+            }
+        }
+
+        return;
+    }
+}
