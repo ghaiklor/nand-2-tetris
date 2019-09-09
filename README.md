@@ -76,6 +76,12 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Examples of virtual machine code](./examples/vm)
 
+### Project 9: High-Level Programming
+
+> This project introduces Jack - a simple, Java-like, object-based programming language. Before building a Jack compiler in projects 10-11, it makes sense to become familiar with the language itself. That's what we'll do in this project.
+
+[Source code for Mandelbrot Set Renderer](./examples/compiler/Mandelbrot)
+
 ## License
 
 [MIT License](./LICENSE)
