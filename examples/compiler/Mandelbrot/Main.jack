@@ -13,7 +13,7 @@ class Main {
         var char key;
         var boolean exit;
 
-        let set = Set.new(4, 2, 512, 256);
+        let set = Set.new(1, 2, 512, 256);
         let exit = false;
 
         do set.draw();
@@ -44,7 +44,6 @@ class Main {
 
             while (~(key = 0)) {
                 let key = Keyboard.keyPressed();
-                do Screen.clearScreen();
                 do set.draw();
             }
         }

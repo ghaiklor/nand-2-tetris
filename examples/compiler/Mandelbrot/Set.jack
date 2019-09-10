@@ -1,6 +1,4 @@
 class Set {
-    static Array bitMasks;
-
     field int maxValue;
     field int maxIterations;
     field int width;
@@ -11,21 +9,10 @@ class Set {
      * I was forced to "mangle" the arguments names, sorry
      */
     constructor Set new(int mxValue, int mxIterations, int wdth, int hght) {
-        var int i, j;
-
         let maxValue = mxValue;
         let maxIterations = mxIterations;
         let width = wdth;
         let height = hght;
-
-        let bitMasks = Array.new(16);
-        let j = 1;
-        let i = 0;
-        while (i < 16) {
-            let bitMasks[i] = j;
-            let j = j + j;
-            let i = i + 1;
-        }
 
         return this;
     }
@@ -44,12 +31,20 @@ class Set {
         var int xOfSquare, yOfSquare;
 
         let currentIteration = 0;
+        let xOfSquare = 0;
+        let yOfSquare = 0;
         let x = 0;
         let y = 0;
 
         while ((currentIteration < maxIterations) & (x * x + y * y < maxValue)) {
-            let xOfSquare = x * x - y * y;
-            let yOfSquare = 2 * x * y;
+            // This particular optimization allows to skip multiplication
+            // if one of operands are zero
+            // because in that case, the result will be 0 anyway
+            if (~((x = 0) | (y = 0))) {
+                let xOfSquare = x * x - y * y;
+                let yOfSquare = 2 * x * y;
+            }
+
             let x = xOfSquare + pointX;
             let y = yOfSquare + pointY;
             let currentIteration = currentIteration + 1;
@@ -78,27 +73,6 @@ class Set {
     }
 
     /**
-     * The method for drawing pixel itself.
-     * Why moving out in separate method?
-     * Well, OS implementation of drawPixel is slow for our case.
-     * In future, it can be optimized somehow, but I didn't figure it out yet?
-     */
-    method void drawPixel(int x, int y, int color) {
-        var int a, d;
-
-        let a = 16384 + (y * 32) + (x / 16);
-        let d = x - (x / 16 * 16);
-
-        if (color) {
-            do Memory.poke(a, Memory.peek(a) | bitMasks[d]);
-        } else {
-            do Memory.poke(a, Memory.peek(a) & ~bitMasks[d]);
-        }
-
-        return;
-    }
-
-    /**
      * The actual drawing of the set on the screen.
      * Nothing complex here, just iterating over coordinates
      * and calculating the color (black/white) for each of them.
@@ -106,12 +80,17 @@ class Set {
     method void draw() {
         var int x, y;
 
+        do Screen.clearScreen();
+        do Screen.setColor(true);
+
         let x = 0;
         let y = 0;
-
         while (y < height) {
             while (x < width) {
-                do drawPixel(x, y, getColorForCoordinates(x, y));
+                if (getColorForCoordinates(x, y) = 1) {
+                    do Screen.drawPixel(x, y);
+                }
+
                 let x = x + 1;
             }
 
