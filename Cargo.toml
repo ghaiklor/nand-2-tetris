@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "src/compiler",
     "src/hasm",
     "src/vm"
 ]
