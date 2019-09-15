@@ -85,3 +85,6 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 ## License
 
 [MIT License](./LICENSE)
+
+All the materials used here are from [nand2tetris](https://www.nand2tetris.org) course.
+Which are shared by [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) license.
