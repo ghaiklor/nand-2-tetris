@@ -103,19 +103,19 @@ function vm_spec() {
     header "Translating $VM_SPEC"
     for vm_file in "$VM_SPEC"/**/*.vm; do
         # These are the cases when we need to translate the whole directory
-        if [[ $(dirname "$vm_file") =~ FibonacciElement ]]; then
+        if [[ $(dirname "$vm_file") =~ fibonacci-element ]]; then
             "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/FibonacciElement.asm"
             success "🙂 $(basename "$vm_file")"
             continue
         fi
 
-        if [[ $(dirname "$vm_file") =~ NestedCall ]]; then
+        if [[ $(dirname "$vm_file") =~ nested-call ]]; then
             "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/NestedCall.asm"
             success "🙂 $(basename "$vm_file")"
             continue
         fi
 
-        if [[ $(dirname "$vm_file") =~ StaticsTest ]]; then
+        if [[ $(dirname "$vm_file") =~ statics-test ]]; then
             "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/StaticsTest.asm"
             success "🙂 $(basename "$vm_file")"
             continue
