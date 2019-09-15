@@ -42,9 +42,9 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 > Every hardware platform is designed to execute commands in a certain machine language, expressed using agreed-upon binary codes. Writing programs directly in binary code is a possible, yet unnecessary. Instead, we can write such programs using a low-level symbolic language, called assembly, and have them translated into binary code by a program called assembler. In this project you will write some low-level assembly programs, and will be forever thankful for high-level languages like Java and Python. (Actually, assembly programming can be highly rewarding, allowing direct and complete control of the underlying machine.)
 
-[Source code for multiplication of two numbers](./examples/cpu/mult)
+[Source code for multiplication of two numbers](./spec/cpu/mult)
 
-[Source code for filling the screen](./examples/cpu/fill)
+[Source code for filling the screen](./spec/cpu/fill)
 
 ### Project 5: Computer Architecture
 
@@ -58,7 +58,7 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Source code for Hack Assembler (hasm)](./src/hasm)
 
-[Examples of Assembly files hasm can translate](./examples/hasm)
+[Examples of Assembly files hasm can translate](./spec/hasm)
 
 ### Project 7: The Virtual Machine
 
@@ -66,7 +66,7 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Source code for virtual machine code translator](./src/vm)
 
-[Examples of virtual machine code](./examples/vm)
+[Examples of virtual machine code](./spec/vm)
 
 ### Project 8: The Virtual Machine II
 
@@ -74,13 +74,13 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Source code for virtual machine code translator](./src/vm)
 
-[Examples of virtual machine code](./examples/vm)
+[Examples of virtual machine code](./spec/vm)
 
 ### Project 9: High-Level Programming
 
 > This project introduces Jack - a simple, Java-like, object-based programming language. Before building a Jack compiler in projects 10-11, it makes sense to become familiar with the language itself. That's what we'll do in this project.
 
-[Source code for Mandelbrot Set Renderer](./examples/compiler/Mandelbrot)
+[Source code for Mandelbrot Set Renderer](./examples/mandelbrot)
 
 ## License
 
