@@ -36,8 +36,8 @@ Temporary Items
 .apdisk
 
 # Nand2Tetris Artifacts
-/examples/compiler/**/*.vm
-/examples/vm/**/*.asm
+/examples/**/*.vm
+/spec/vm/**/*.asm
 *.dat
 *.out
 *.hack

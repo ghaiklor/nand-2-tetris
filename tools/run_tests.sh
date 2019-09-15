@@ -12,9 +12,9 @@ set -euo pipefail
 
 PROJECT_ROOT=$PWD
 PROJECT_TOOLS_ROOT=$PROJECT_ROOT/tools
-CPU_EXAMPLES=$PROJECT_ROOT/examples/cpu
-HASM_EXAMPLES=$PROJECT_ROOT/examples/hasm
-VM_EXAMPLES=$PROJECT_ROOT/examples/vm
+CPU_SPEC=$PROJECT_ROOT/spec/cpu
+HASM_SPEC=$PROJECT_ROOT/spec/hasm
+VM_SPEC=$PROJECT_ROOT/spec/vm
 CPU_SOURCES=$PROJECT_ROOT/src/cpu
 COMPUTER_SOURCES=$CPU_SOURCES/computer
 
@@ -44,20 +44,19 @@ function failed() {
     echo -e "$FAILED_COLOR---> $1$DEFAULT_COLOR"
 }
 
-# Assembling and testing examples for CPU, according to Project 4
-# https://github.com/ghaiklor/nand-2-tetris#project-4-machine-language-programming
-function cpu_examples() {
+# Assembling and testing spec files for CPU, according to Project 1, 2, 3, 4, 5, 6
+function cpu_spec() {
     echo
 
-    header "Assembling $CPU_EXAMPLES"
-    for asm_file in "$CPU_EXAMPLES"/**/*.asm; do
+    header "Assembling $CPU_SPEC"
+    for asm_file in "$CPU_SPEC"/**/*.asm; do
         "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname "$asm_file")/$(basename "$asm_file" .asm).hack"
         success "🙂 $(basename "$asm_file")"
     done
 
     echo
-    header "Testing $CPU_EXAMPLES"
-    for tst_file in "$CPU_EXAMPLES"/**/*.tst; do
+    header "Testing $CPU_SPEC"
+    for tst_file in "$CPU_SPEC"/**/*.tst; do
         # Fill.tst can not be tested automatically
         if [[ $tst_file =~ Fill.tst ]]; then
             continue
@@ -66,29 +65,7 @@ function cpu_examples() {
         "$PROJECT_TOOLS_ROOT"/cpu_emulator.sh "$tst_file" > /dev/null 2>&1
         success "🙂 $(basename "$tst_file")"
     done
-}
 
-# Assembling examples for the Computer, according to the Project 5
-# https://github.com/ghaiklor/nand-2-tetris#project-5-computer-architecture
-function hasm_examples() {
-    echo
-
-    header "Assembling $HASM_EXAMPLES"
-    for asm_file in "$HASM_EXAMPLES"/*.asm; do
-        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname "$asm_file")/$(basename "$asm_file" .asm).hack"
-        success "🙂 $(basename "$asm_file")"
-    done
-
-    echo
-    header "Moving assembled files to $COMPUTER_SOURCES"
-    for hack_file in "$HASM_EXAMPLES"/*.hack; do
-        mv "$hack_file" "$COMPUTER_SOURCES/$(basename "$hack_file")"
-        success "🙂 $(basename "$hack_file") -> $COMPUTER_SOURCES/$(basename "$hack_file")"
-    done
-}
-
-# Running tests for the Projects 1, 2, 3, 5
-function cpu_tests() {
     echo
     header "Running tests for $CPU_SOURCES"
     for tst_file in "$CPU_SOURCES"/**/*.tst; do
@@ -102,12 +79,29 @@ function cpu_tests() {
     done
 }
 
-# Running tests for the Project 7, 8
-function vm_tests() {
+function hasm_spec() {
     echo
 
-    header "Translating $VM_EXAMPLES"
-    for vm_file in "$VM_EXAMPLES"/**/*.vm; do
+    header "Assembling $HASM_SPEC"
+    for asm_file in "$HASM_SPEC"/*.asm; do
+        "$HASM_EXECUTABLE" --input "$asm_file" --output "$(dirname "$asm_file")/$(basename "$asm_file" .asm).hack"
+        success "🙂 $(basename "$asm_file")"
+    done
+
+    echo
+    header "Moving assembled files to $COMPUTER_SOURCES"
+    for hack_file in "$HASM_SPEC"/*.hack; do
+        mv "$hack_file" "$COMPUTER_SOURCES/$(basename "$hack_file")"
+        success "🙂 $(basename "$hack_file") -> $COMPUTER_SOURCES/$(basename "$hack_file")"
+    done
+}
+
+# Running tests for the Project 7, 8
+function vm_spec() {
+    echo
+
+    header "Translating $VM_SPEC"
+    for vm_file in "$VM_SPEC"/**/*.vm; do
         # These are the cases when we need to translate the whole directory
         if [[ $(dirname "$vm_file") =~ FibonacciElement ]]; then
             "$VM_EXECUTABLE" --input "$(dirname "$vm_file")" --output "$(dirname "$vm_file")/FibonacciElement.asm"
@@ -131,8 +125,8 @@ function vm_tests() {
         success "🙂 $(basename "$vm_file")"
     done
 
-    header "Running tests for $VM_EXAMPLES"
-    for tst_file in "$VM_EXAMPLES"/**/*.tst; do
+    header "Running tests for $VM_SPEC"
+    for tst_file in "$VM_SPEC"/**/*.tst; do
         pending "🕰 Simulating $(basename "$tst_file")"
 
         if [[ $tst_file =~ VME.tst ]]; then
@@ -143,10 +137,9 @@ function vm_tests() {
     done
 }
 
-cpu_examples
-hasm_examples
-cpu_tests
-vm_tests
+cpu_spec
+hasm_spec
+vm_spec
 
 echo
 success "All tests have been passed!"
