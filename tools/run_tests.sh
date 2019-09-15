@@ -137,8 +137,8 @@ function vm_spec() {
     done
 }
 
-cpu_spec
 hasm_spec
+cpu_spec
 vm_spec
 
 echo
