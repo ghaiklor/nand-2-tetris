@@ -3,6 +3,8 @@ use crate::token::*;
 pub struct Scanner {
     index: usize,
     source: String,
+    line: usize,
+    column: usize,
 }
 
 impl Scanner {
@@ -10,6 +12,8 @@ impl Scanner {
         Scanner {
             index: 0,
             source: String::from(source_code),
+            line: 1,
+            column: 1,
         }
     }
 
@@ -34,6 +38,11 @@ impl Scanner {
                 .next()
                 .unwrap_or_else(|| '\0');
 
+            if character == '\n' {
+                self.line += 1;
+                self.column = 1;
+            }
+
             if character == '/' && next_character == '/' {
                 self.skip_comments();
                 continue;
@@ -46,6 +55,7 @@ impl Scanner {
 
             if character.is_whitespace() {
                 self.index += 1;
+                self.column += 1;
                 continue;
             }
 
@@ -56,6 +66,7 @@ impl Scanner {
 
             if character == '"' {
                 self.index += 1;
+                self.column += 1;
                 tokens.push(self.scan_string_literal());
                 continue;
             }
@@ -92,6 +103,8 @@ impl Scanner {
         if character == '/' && next_character == '/' {
             while character != '\n' && self.index < length {
                 self.index += 1;
+                self.column += 1;
+
                 character = self
                     .source
                     .get(self.index..=self.index)
@@ -102,13 +115,22 @@ impl Scanner {
             }
 
             self.index += 1;
+            self.line += 1;
+            self.column = 1;
         }
 
         if character == '/' && next_character == '*' {
             self.index += 2;
+            self.column += 2;
 
-            while character != '*' && next_character != '/' && self.index < length {
+            while !(character == '*' && next_character == '/') && self.index < length {
                 self.index += 1;
+                self.column += 1;
+                if character == '\n' {
+                    self.line += 1;
+                    self.column = 1;
+                }
+
                 character = self
                     .source
                     .get(self.index..=self.index)
@@ -127,6 +149,7 @@ impl Scanner {
             }
 
             self.index += 2;
+            self.column += 2;
         }
     }
 
@@ -139,6 +162,7 @@ impl Scanner {
             .next()
             .unwrap();
         self.index += 1;
+        self.column += 1;
 
         match character {
             '{' => Token::Symbol(Symbol::LeftCurlyBraces, String::from("{")),
@@ -160,7 +184,10 @@ impl Scanner {
             '>' => Token::Symbol(Symbol::GreaterThan, String::from(">")),
             '=' => Token::Symbol(Symbol::Equal, String::from("=")),
             '~' => Token::Symbol(Symbol::Tilde, String::from("~")),
-            _ => panic!("Unknown character: {}", character),
+            _ => panic!(
+                "Unknown character: {:?} at {}:{}",
+                character, self.line, self.column
+            ),
         }
     }
 
@@ -178,6 +205,7 @@ impl Scanner {
         while character.is_numeric() && self.index < length {
             buffer.push(character);
             self.index += 1;
+            self.column += 1;
             character = self
                 .source
                 .get(self.index..=self.index)
@@ -205,6 +233,7 @@ impl Scanner {
         while character != '"' && self.index < length {
             buffer.push(character);
             self.index += 1;
+            self.column += 1;
             character = self
                 .source
                 .get(self.index..=self.index)
@@ -232,6 +261,7 @@ impl Scanner {
         while character.is_alphanumeric() && self.index < length {
             buffer.push(character);
             self.index += 1;
+            self.column += 1;
             character = self
                 .source
                 .get(self.index..=self.index)

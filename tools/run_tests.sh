@@ -156,9 +156,11 @@ function compiler_spec() {
     echo
     header "Comparing tokens and AST in $COMPILER_SPEC"
     for jack_file in "$COMPILER_SPEC"/**/*.jack; do
-        diff "$(dirname "$jack_file")/$(basename "$jack_file" .jack).tok" "$(dirname "$jack_file")/$(basename "$jack_file" .jack)T.xml"
-        diff "$(dirname "$jack_file")/$(basename "$jack_file" .jack).ast" "$(dirname "$jack_file")/$(basename "$jack_file" .jack).xml"
-        success "🙂 $(basename "$jack_file")"
+        "$PROJECT_TOOLS_ROOT"/text_comparer.sh "$(dirname "$jack_file")/$(basename "$jack_file" .jack).tok" "$(dirname "$jack_file")/$(basename "$jack_file" .jack)T.xml" > /dev/null 2>&1
+        success "🙂 $(basename "$jack_file") (tokens)"
+
+        "$PROJECT_TOOLS_ROOT"/text_comparer.sh "$(dirname "$jack_file")/$(basename "$jack_file" .jack).ast" "$(dirname "$jack_file")/$(basename "$jack_file" .jack).xml" > /dev/null 2>&1
+        success "🙂 $(basename "$jack_file") (ast)"
     done
 }
 
