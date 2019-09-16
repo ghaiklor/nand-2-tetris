@@ -38,6 +38,7 @@ Temporary Items
 # Nand2Tetris Artifacts
 /examples/**/*.vm
 /spec/vm/**/*.asm
+/spec/compiler/**/*.tok
 *.dat
 *.out
 *.hack
