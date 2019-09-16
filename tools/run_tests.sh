@@ -12,12 +12,14 @@ set -euo pipefail
 
 PROJECT_ROOT=$PWD
 PROJECT_TOOLS_ROOT=$PROJECT_ROOT/tools
+COMPILER_SPEC=$PROJECT_ROOT/spec/compiler
 CPU_SPEC=$PROJECT_ROOT/spec/cpu
 HASM_SPEC=$PROJECT_ROOT/spec/hasm
 VM_SPEC=$PROJECT_ROOT/spec/vm
 CPU_SOURCES=$PROJECT_ROOT/src/cpu
 COMPUTER_SOURCES=$CPU_SOURCES/computer
 
+COMPILER_EXECUTABLE=$PROJECT_ROOT/target/debug/compiler
 HASM_EXECUTABLE=$PROJECT_ROOT/target/debug/hasm
 VM_EXECUTABLE=$PROJECT_ROOT/target/debug/vm
 
@@ -137,9 +139,32 @@ function vm_spec() {
     done
 }
 
+function compiler_spec() {
+    echo
+
+    header "Compiling $COMPILER_SPEC"
+    for jack_file in "$COMPILER_SPEC"/**/*.jack; do
+        "$COMPILER_EXECUTABLE" \
+            --input "$jack_file" \
+            --output "$(dirname "$jack_file")/$(basename "$jack_file" .jack).vm" \
+            --emit-tokens "$(dirname "$jack_file")/$(basename "$jack_file" .jack).tok" \
+            --emit-ast "$(dirname "$jack_file")/$(basename "$jack_file" .jack).ast"
+
+        success "🙂 $(basename "$jack_file")"
+    done
+
+    echo
+    header "Comparing tokens and AST in $COMPILER_SPEC"
+    for jack_file in "$COMPILER_SPEC"/**/*.jack; do
+        exit 1
+        success "🙂 $(basename "$jack_file")"
+    done
+}
+
 hasm_spec
 cpu_spec
 vm_spec
+compiler_spec
 
 echo
 success "All tests have been passed!"
