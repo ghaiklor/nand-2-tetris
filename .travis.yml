@@ -1,8 +1,11 @@
+dist: xenial
 language: rust
 rust:
   - stable
-before_script:
-  - apt-get install -y libxml2-utils
+addons:
+  apt:
+    packages:
+      - libxml2-utils
 script:
   - cargo build --verbose
   - cargo test --verbose
