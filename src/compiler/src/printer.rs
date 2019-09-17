@@ -39,3 +39,7 @@ pub fn print_tokens(tokens: &[Token], output_file: &str) {
 
     fs::write(output_file, output).expect("Can not write to the tokens file");
 }
+
+pub fn print_ast(ast: &str, output_file: &str) {
+    fs::write(output_file, ast).expect("Can not write to the AST file");
+}

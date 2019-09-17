@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Keyword {
     Class,
     Constructor,
@@ -23,7 +23,7 @@ pub enum Keyword {
     Return,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Symbol {
     LeftCurlyBraces,
     RightCurlyBraces,
@@ -46,7 +46,16 @@ pub enum Symbol {
     Tilde,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
+pub enum TokenType {
+    Keyword,
+    Symbol,
+    IntegerLiteral,
+    StringLiteral,
+    Identifier,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Keyword(Keyword, String),
     Symbol(Symbol, String),

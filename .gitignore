@@ -39,6 +39,7 @@ Temporary Items
 /examples/**/*.vm
 /spec/vm/**/*.asm
 /spec/compiler/**/*.tok
+/spec/compiler/**/*.ast
 *.dat
 *.out
 *.hack

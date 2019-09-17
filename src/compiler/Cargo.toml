@@ -8,3 +8,5 @@ workspace = "../.."
 
 [dependencies]
 clap = "2.33.0"
+xml_writer = "0.4.0"
+tempfile = "3.1.0"
