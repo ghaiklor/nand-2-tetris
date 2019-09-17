@@ -82,6 +82,12 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 [Source code for Mandelbrot Set Renderer](./examples/mandelbrot)
 
+### Project 10: Compiler I - Syntax Analysis
+
+> The Jack compiler, like those of Java and C#, is two-tiered: the compiler's front-end translates from the high-level language to an intermediate VM language; the compiler's back-end translates further from the VM language to the native code of the host platform. In projects 7-8 we've built the compiler's back-end (the VM translator); we now turn to building the compiler's front-end. This development will span two projects: syntax analysis (this project), and code generation (next project). Welcome to syntax analysis.
+
+[Source code for compiler](./src/compiler)
+
 ## License
 
 [MIT License](./LICENSE)
