@@ -144,12 +144,7 @@ function compiler_spec() {
 
     header "Compiling $COMPILER_SPEC"
     for jack_file in "$COMPILER_SPEC"/**/*.jack; do
-        "$COMPILER_EXECUTABLE" \
-            --input "$jack_file" \
-            --output "$(dirname "$jack_file")/$(basename "$jack_file" .jack).vm" \
-            --emit-tokens "$(dirname "$jack_file")/$(basename "$jack_file" .jack).tok" \
-            --emit-ast "$(dirname "$jack_file")/$(basename "$jack_file" .jack).ast"
-
+        "$COMPILER_EXECUTABLE" --input "$jack_file" --emit-tokens --emit-ast
         success "🙂 $(basename "$jack_file")"
     done
 
