@@ -146,12 +146,19 @@ impl<'a> Parser<'a> {
     fn class_var_dec(&mut self) {
         self.output.begin_elem("classVarDec").unwrap();
         self.expect(TokenType::Keyword);
-        self.expect(TokenType::Keyword);
+
+        if !self.eat(TokenType::Keyword) {
+            self.eat(TokenType::Identifier);
+        }
 
         while self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ';'
         {
-            self.eat(TokenType::Identifier);
+            self.expect(TokenType::Identifier);
+
+            if self.symbol(self.current_token) == ',' {
+                self.expect(TokenType::Symbol);
+            }
         }
 
         self.expect(TokenType::Symbol);
@@ -161,7 +168,11 @@ impl<'a> Parser<'a> {
     fn subroutine_dec(&mut self) {
         self.output.begin_elem("subroutineDec").unwrap();
         self.expect(TokenType::Keyword);
-        self.expect(TokenType::Keyword);
+
+        if !self.eat(TokenType::Keyword) {
+            self.eat(TokenType::Identifier);
+        }
+
         self.expect(TokenType::Identifier);
         self.expect(TokenType::Symbol);
 
@@ -187,7 +198,13 @@ impl<'a> Parser<'a> {
         while self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ')'
         {
-            self.expect(TokenType::Identifier);
+            if !self.eat(TokenType::Identifier) {
+                self.eat(TokenType::Keyword);
+            }
+
+            if self.symbol(self.current_token) == ',' {
+                self.eat(TokenType::Symbol);
+            }
         }
 
         self.output.end_elem().unwrap();
