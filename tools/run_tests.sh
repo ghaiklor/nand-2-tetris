@@ -158,7 +158,9 @@ function compiler_spec() {
     echo
     header "Comparing ast in $COMPILER_SPEC"
     for jack_file in "$COMPILER_SPEC"/**/*.jack; do
-        "$PROJECT_TOOLS_ROOT"/text_comparer.sh "$(dirname "$jack_file")/$(basename "$jack_file" .jack).ast" "$(dirname "$jack_file")/$(basename "$jack_file" .jack).xml" > /dev/null 2>&1
+        my_file=$(xmllint --format --c14n --nonet --noblanks "$(dirname "$jack_file")/$(basename "$jack_file" .jack).ast")
+        cmp_file=$(xmllint --format --c14n --nonet --noblanks "$(dirname "$jack_file")/$(basename "$jack_file" .jack).xml")
+        diff -qwyEbBad <(echo "$my_file") <(echo "$cmp_file")
         success "🙂 $(basename "$jack_file")"
     done
 }

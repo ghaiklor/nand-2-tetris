@@ -7,8 +7,7 @@
     <keyword> void </keyword>
     <identifier> main </identifier>
     <symbol> ( </symbol>
-    <parameterList>
-    </parameterList>
+    <parameterList></parameterList>
     <symbol> ) </symbol>
     <subroutineBody>
       <symbol> { </symbol>
@@ -269,8 +268,7 @@
           <symbol> . </symbol>
           <identifier> println </identifier>
           <symbol> ( </symbol>
-          <expressionList>
-          </expressionList>
+          <expressionList></expressionList>
           <symbol> ) </symbol>
           <symbol> ; </symbol>
         </doStatement>
