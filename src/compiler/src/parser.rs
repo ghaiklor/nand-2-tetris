@@ -25,6 +25,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse(mut self) -> String {
         self.class();
+        self.output.write("\n").unwrap();
 
         let mut ast_file = self.output.into_inner();
         let mut contents = String::new();
@@ -40,7 +41,11 @@ impl<'a> Parser<'a> {
         if self.index < self.tokens.len() {
             self.write_token(self.current_token);
             self.current_token = &self.tokens[self.index];
-            self.index += 1;
+
+            if self.index + 1 != self.tokens.len() {
+                self.index += 1;
+            }
+
             return true;
         }
 
@@ -93,29 +98,29 @@ impl<'a> Parser<'a> {
     fn write_token(&mut self, token: &Token) {
         match token {
             Token::Identifier(id) => {
-                self.output.begin_elem("identifier").unwrap();
-                self.output.text(&format!(" {} ", id)).unwrap();
-                self.output.end_elem().unwrap();
+                self.output
+                    .elem_text("identifier", &format!(" {} ", id))
+                    .unwrap();
             }
             Token::IntegerLiteral(literal) => {
-                self.output.begin_elem("integerConstant").unwrap();
-                self.output.text(&format!(" {} ", literal)).unwrap();
-                self.output.end_elem().unwrap();
+                self.output
+                    .elem_text("integerConstant", &format!(" {} ", literal))
+                    .unwrap();
             }
             Token::Keyword(_keyword, lexeme) => {
-                self.output.begin_elem("keyword").unwrap();
-                self.output.text(&format!(" {} ", lexeme)).unwrap();
-                self.output.end_elem().unwrap();
+                self.output
+                    .elem_text("keyword", &format!(" {} ", lexeme))
+                    .unwrap();
             }
             Token::StringLiteral(string) => {
-                self.output.begin_elem("stringConstant").unwrap();
-                self.output.text(&format!(" {} ", string)).unwrap();
-                self.output.end_elem().unwrap();
+                self.output
+                    .elem_text("stringConstant", &format!(" {} ", string))
+                    .unwrap();
             }
             Token::Symbol(_symbol, lexeme) => {
-                self.output.begin_elem("symbol").unwrap();
-                self.output.text(&format!(" {} ", lexeme)).unwrap();
-                self.output.end_elem().unwrap();
+                self.output
+                    .elem_text("symbol", &format!(" {} ", lexeme))
+                    .unwrap();
             }
         }
     }
@@ -140,6 +145,7 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(TokenType::Symbol);
+        self.output.write("\n").unwrap();
         self.output.end_elem().unwrap();
     }
 
