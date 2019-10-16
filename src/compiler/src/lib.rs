@@ -3,6 +3,7 @@ pub mod config;
 pub mod parser;
 pub mod printer;
 pub mod scanner;
+pub mod symbol_table;
 pub mod token;
 
 use config::Config;

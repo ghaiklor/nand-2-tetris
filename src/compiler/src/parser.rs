@@ -1,4 +1,5 @@
 use crate::codegen::Codegen;
+use crate::symbol_table::SymbolTable;
 use crate::token::*;
 use std::fs::File;
 use std::io::Read;
@@ -12,6 +13,7 @@ pub struct Parser<'a> {
     current_token: &'a Token,
     index: usize,
     ast: XmlWriter<'a, File>,
+    symbol_table: SymbolTable<'a>,
     codegen: Codegen,
 }
 
@@ -22,6 +24,7 @@ impl<'a> Parser<'a> {
             current_token: &tokens[0],
             index: 1,
             ast: XmlWriter::new(tempfile().expect("Can not open AST file for writing")),
+            symbol_table: SymbolTable::new(),
             codegen: Codegen::new(),
         }
     }
@@ -42,7 +45,7 @@ impl<'a> Parser<'a> {
 
     fn advance(&mut self) -> bool {
         if self.index < self.tokens.len() {
-            self.write_token(self.current_token);
+            self.write_token_to_ast(self.current_token);
             self.current_token = &self.tokens[self.index];
 
             if self.index + 1 != self.tokens.len() {
@@ -98,7 +101,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn write_token(&mut self, token: &Token) {
+    fn write_token_to_ast(&mut self, token: &Token) {
         match token {
             Token::Identifier(id) => {
                 self.ast
