@@ -1,3 +1,4 @@
+use crate::codegen::Codegen;
 use crate::token::*;
 use std::fs::File;
 use std::io::Read;
@@ -10,7 +11,8 @@ pub struct Parser<'a> {
     tokens: &'a [Token],
     current_token: &'a Token,
     index: usize,
-    output: XmlWriter<'a, File>,
+    ast: XmlWriter<'a, File>,
+    codegen: Codegen,
 }
 
 impl<'a> Parser<'a> {
@@ -19,22 +21,23 @@ impl<'a> Parser<'a> {
             tokens,
             current_token: &tokens[0],
             index: 1,
-            output: XmlWriter::new(tempfile().expect("Can not open AST file for writing")),
+            ast: XmlWriter::new(tempfile().expect("Can not open AST file for writing")),
+            codegen: Codegen::new(),
         }
     }
 
-    pub fn parse(mut self) -> String {
+    pub fn parse(mut self) -> (String, String) {
         self.class();
-        self.output.write("\n").unwrap();
+        self.ast.write("\n").unwrap();
 
-        let mut ast_file = self.output.into_inner();
-        let mut contents = String::new();
+        let mut ast_file = self.ast.into_inner();
+        let mut ast = String::new();
         ast_file.seek(SeekFrom::Start(0)).unwrap();
         ast_file
-            .read_to_string(&mut contents)
+            .read_to_string(&mut ast)
             .expect("Can not read from AST file");
 
-        contents
+        (ast, self.codegen.vm_code)
     }
 
     fn advance(&mut self) -> bool {
@@ -98,27 +101,27 @@ impl<'a> Parser<'a> {
     fn write_token(&mut self, token: &Token) {
         match token {
             Token::Identifier(id) => {
-                self.output
+                self.ast
                     .elem_text("identifier", &format!(" {} ", id))
                     .unwrap();
             }
             Token::IntegerLiteral(literal) => {
-                self.output
+                self.ast
                     .elem_text("integerConstant", &format!(" {} ", literal))
                     .unwrap();
             }
             Token::Keyword(_keyword, lexeme) => {
-                self.output
+                self.ast
                     .elem_text("keyword", &format!(" {} ", lexeme))
                     .unwrap();
             }
             Token::StringLiteral(string) => {
-                self.output
+                self.ast
                     .elem_text("stringConstant", &format!(" {} ", string))
                     .unwrap();
             }
             Token::Symbol(_symbol, lexeme) => {
-                self.output
+                self.ast
                     .elem_text("symbol", &format!(" {} ", lexeme))
                     .unwrap();
             }
@@ -126,7 +129,7 @@ impl<'a> Parser<'a> {
     }
 
     fn class(&mut self) {
-        self.output.begin_elem("class").unwrap();
+        self.ast.begin_elem("class").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Identifier);
         self.expect(TokenType::Symbol);
@@ -145,12 +148,12 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(TokenType::Symbol);
-        self.output.write("\n").unwrap();
-        self.output.end_elem().unwrap();
+        self.ast.write("\n").unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn class_var_dec(&mut self) {
-        self.output.begin_elem("classVarDec").unwrap();
+        self.ast.begin_elem("classVarDec").unwrap();
         self.expect(TokenType::Keyword);
 
         if !self.eat(TokenType::Keyword) {
@@ -168,11 +171,11 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(TokenType::Symbol);
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn subroutine_dec(&mut self) {
-        self.output.begin_elem("subroutineDec").unwrap();
+        self.ast.begin_elem("subroutineDec").unwrap();
         self.expect(TokenType::Keyword);
 
         if !self.eat(TokenType::Keyword) {
@@ -185,7 +188,7 @@ impl<'a> Parser<'a> {
         self.parameter_list();
         self.expect(TokenType::Symbol);
 
-        self.output.begin_elem("subroutineBody").unwrap();
+        self.ast.begin_elem("subroutineBody").unwrap();
         self.expect(TokenType::Symbol);
 
         while self.keyword(self.current_token) == "var" {
@@ -194,12 +197,12 @@ impl<'a> Parser<'a> {
 
         self.statements();
         self.expect(TokenType::Symbol);
-        self.output.end_elem().unwrap();
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn parameter_list(&mut self) {
-        self.output.begin_elem("parameterList").unwrap();
+        self.ast.begin_elem("parameterList").unwrap();
 
         while self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ')'
@@ -213,11 +216,11 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn var_dec(&mut self) {
-        self.output.begin_elem("varDec").unwrap();
+        self.ast.begin_elem("varDec").unwrap();
         self.expect(TokenType::Keyword);
 
         if !self.eat(TokenType::Keyword) {
@@ -234,11 +237,11 @@ impl<'a> Parser<'a> {
 
         self.expect(TokenType::Symbol);
 
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn statements(&mut self) {
-        self.output.begin_elem("statements").unwrap();
+        self.ast.begin_elem("statements").unwrap();
 
         while let Token::Keyword(keyword, _) = self.current_token {
             match keyword {
@@ -251,11 +254,11 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn do_statement(&mut self) {
-        self.output.begin_elem("doStatement").unwrap();
+        self.ast.begin_elem("doStatement").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Identifier);
 
@@ -268,11 +271,11 @@ impl<'a> Parser<'a> {
         self.expression_list();
         self.expect(TokenType::Symbol);
         self.expect(TokenType::Symbol);
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn let_statement(&mut self) {
-        self.output.begin_elem("letStatement").unwrap();
+        self.ast.begin_elem("letStatement").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Identifier);
 
@@ -285,11 +288,11 @@ impl<'a> Parser<'a> {
         self.expect(TokenType::Symbol);
         self.expression();
         self.expect(TokenType::Symbol);
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn while_statement(&mut self) {
-        self.output.begin_elem("whileStatement").unwrap();
+        self.ast.begin_elem("whileStatement").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Symbol);
         self.expression();
@@ -297,11 +300,11 @@ impl<'a> Parser<'a> {
         self.expect(TokenType::Symbol);
         self.statements();
         self.expect(TokenType::Symbol);
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn return_statement(&mut self) {
-        self.output.begin_elem("returnStatement").unwrap();
+        self.ast.begin_elem("returnStatement").unwrap();
         self.expect(TokenType::Keyword);
 
         if self.token_type(self.current_token) != TokenType::Symbol
@@ -311,11 +314,11 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(TokenType::Symbol);
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn if_statement(&mut self) {
-        self.output.begin_elem("ifStatement").unwrap();
+        self.ast.begin_elem("ifStatement").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Symbol);
         self.expression();
@@ -331,11 +334,11 @@ impl<'a> Parser<'a> {
             self.expect(TokenType::Symbol);
         }
 
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn expression(&mut self) {
-        self.output.begin_elem("expression").unwrap();
+        self.ast.begin_elem("expression").unwrap();
         self.term();
 
         while self.symbol(self.current_token) == '+'
@@ -352,11 +355,11 @@ impl<'a> Parser<'a> {
             self.term();
         }
 
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn term(&mut self) {
-        self.output.begin_elem("term").unwrap();
+        self.ast.begin_elem("term").unwrap();
 
         match self.current_token {
             Token::IntegerLiteral(_) => self.expect(TokenType::IntegerLiteral),
@@ -394,11 +397,11 @@ impl<'a> Parser<'a> {
                 }
             }
         }
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 
     fn expression_list(&mut self) {
-        self.output.begin_elem("expressionList").unwrap();
+        self.ast.begin_elem("expressionList").unwrap();
 
         if self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ')'
@@ -411,6 +414,6 @@ impl<'a> Parser<'a> {
             }
         }
 
-        self.output.end_elem().unwrap();
+        self.ast.end_elem().unwrap();
     }
 }

@@ -22,21 +22,8 @@ impl Scanner {
         let length = self.source.chars().count();
 
         while self.index < length {
-            let character = self
-                .source
-                .get(self.index..=self.index)
-                .unwrap()
-                .chars()
-                .next()
-                .unwrap();
-
-            let next_character = self
-                .source
-                .get(self.index + 1..=self.index + 1)
-                .unwrap_or_else(|| "")
-                .chars()
-                .next()
-                .unwrap_or_else(|| '\0');
+            let character = self.current_char();
+            let next_character = self.next_char();
 
             if character == '\n' {
                 self.line += 1;
@@ -82,36 +69,35 @@ impl Scanner {
         tokens
     }
 
+    fn current_char(&self) -> char {
+        self.source
+            .get(self.index..=self.index)
+            .unwrap_or_else(|| "")
+            .chars()
+            .next()
+            .unwrap_or_else(|| '\0')
+    }
+
+    fn next_char(&self) -> char {
+        self.source
+            .get(self.index + 1..=self.index + 1)
+            .unwrap_or_else(|| "")
+            .chars()
+            .next()
+            .unwrap_or_else(|| '\0')
+    }
+
     fn skip_comments(&mut self) {
         let length = self.source.chars().count();
-        let mut character = self
-            .source
-            .get(self.index..=self.index)
-            .unwrap()
-            .chars()
-            .next()
-            .unwrap();
-
-        let mut next_character = self
-            .source
-            .get(self.index + 1..=self.index + 1)
-            .unwrap()
-            .chars()
-            .next()
-            .unwrap();
+        let mut character = self.current_char();
+        let mut next_character = self.next_char();
 
         if character == '/' && next_character == '/' {
             while character != '\n' && self.index < length {
                 self.index += 1;
                 self.column += 1;
 
-                character = self
-                    .source
-                    .get(self.index..=self.index)
-                    .unwrap()
-                    .chars()
-                    .next()
-                    .unwrap();
+                character = self.current_char();
             }
 
             self.index += 1;
@@ -131,21 +117,8 @@ impl Scanner {
                     self.column = 1;
                 }
 
-                character = self
-                    .source
-                    .get(self.index..=self.index)
-                    .unwrap()
-                    .chars()
-                    .next()
-                    .unwrap();
-
-                next_character = self
-                    .source
-                    .get(self.index + 1..=self.index + 1)
-                    .unwrap()
-                    .chars()
-                    .next()
-                    .unwrap();
+                character = self.current_char();
+                next_character = self.next_char();
             }
 
             self.index += 2;
@@ -154,13 +127,7 @@ impl Scanner {
     }
 
     fn scan_symbol(&mut self) -> Token {
-        let character = self
-            .source
-            .get(self.index..=self.index)
-            .unwrap()
-            .chars()
-            .next()
-            .unwrap();
+        let character = self.current_char();
         self.index += 1;
         self.column += 1;
 
@@ -194,25 +161,13 @@ impl Scanner {
     fn scan_integer_literal(&mut self) -> Token {
         let length = self.source.chars().count();
         let mut buffer = String::new();
-        let mut character = self
-            .source
-            .get(self.index..=self.index)
-            .unwrap()
-            .chars()
-            .next()
-            .unwrap();
+        let mut character = self.current_char();
 
         while character.is_numeric() && self.index < length {
             buffer.push(character);
             self.index += 1;
             self.column += 1;
-            character = self
-                .source
-                .get(self.index..=self.index)
-                .unwrap()
-                .chars()
-                .next()
-                .unwrap();
+            character = self.current_char();
         }
 
         let integer: u16 = buffer.parse().expect("Integer literal expected");
@@ -222,25 +177,13 @@ impl Scanner {
     fn scan_string_literal(&mut self) -> Token {
         let length = self.source.chars().count();
         let mut buffer = String::new();
-        let mut character = self
-            .source
-            .get(self.index..=self.index)
-            .unwrap()
-            .chars()
-            .next()
-            .unwrap();
+        let mut character = self.current_char();
 
         while character != '"' && self.index < length {
             buffer.push(character);
             self.index += 1;
             self.column += 1;
-            character = self
-                .source
-                .get(self.index..=self.index)
-                .unwrap()
-                .chars()
-                .next()
-                .unwrap();
+            character = self.current_char();
         }
 
         self.index += 1;
@@ -250,25 +193,13 @@ impl Scanner {
     fn scan_identifier_or_keyword(&mut self) -> Token {
         let length = self.source.chars().count();
         let mut buffer = String::new();
-        let mut character = self
-            .source
-            .get(self.index..=self.index)
-            .unwrap()
-            .chars()
-            .next()
-            .unwrap();
+        let mut character = self.current_char();
 
         while character.is_alphanumeric() && self.index < length {
             buffer.push(character);
             self.index += 1;
             self.column += 1;
-            character = self
-                .source
-                .get(self.index..=self.index)
-                .unwrap()
-                .chars()
-                .next()
-                .unwrap();
+            character = self.current_char();
         }
 
         match buffer.as_str() {

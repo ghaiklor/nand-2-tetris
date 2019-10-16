@@ -1,3 +1,4 @@
+pub mod codegen;
 pub mod config;
 pub mod parser;
 pub mod printer;
@@ -35,7 +36,7 @@ pub fn run(config: Config) {
             printer::print_tokens(&tokens, &path);
         }
 
-        let ast = Parser::new(&tokens).parse();
+        let (ast, vm_code) = Parser::new(&tokens).parse();
         if config.emit_ast {
             let path = Path::new(&input_file)
                 .with_extension("ast")
@@ -44,5 +45,8 @@ pub fn run(config: Config) {
                 .to_owned();
             printer::print_ast(&ast, &path);
         }
+
+        let output_path = Path::new(&input_file).with_extension("vm");
+        fs::write(output_path, vm_code).expect("Can not write into VM file");
     }
 }
