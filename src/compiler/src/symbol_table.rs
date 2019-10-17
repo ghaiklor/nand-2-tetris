@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub enum SymbolKind {
     Field,
     Static,
@@ -7,13 +8,14 @@ pub enum SymbolKind {
     Variable,
 }
 
+#[derive(Debug)]
 pub struct Symbol<'a> {
     r#type: &'a str,
     kind: &'a SymbolKind,
     index: u16,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SymbolTable<'a> {
     class_symbols: HashMap<&'a str, Symbol<'a>>,
     subroutine_symbols: HashMap<&'a str, Symbol<'a>>,
@@ -119,5 +121,15 @@ impl<'a> SymbolTable<'a> {
         self.field_index = 0;
         self.static_index = 0;
         self.class_symbols.clear();
+    }
+
+    pub fn kind_from_str(kind: &str) -> SymbolKind {
+        match kind {
+            "argument" => SymbolKind::Argument,
+            "field" => SymbolKind::Field,
+            "static" => SymbolKind::Static,
+            "variable" => SymbolKind::Variable,
+            _ => panic!("Unknown kind {}", kind),
+        }
     }
 }

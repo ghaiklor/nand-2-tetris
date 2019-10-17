@@ -1,4 +1,5 @@
 use crate::codegen::Codegen;
+use crate::symbol_table::SymbolKind;
 use crate::symbol_table::SymbolTable;
 use crate::token::*;
 use std::fs::File;
@@ -94,10 +95,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn keyword(&self, token: &Token) -> String {
+    fn keyword(&self, token: &'a Token) -> &'a str {
         match token {
-            Token::Keyword(_keyword, lexeme) => lexeme.to_owned(),
-            _ => String::from(""),
+            Token::Keyword(_keyword, lexeme) => lexeme,
+            _ => "",
         }
     }
 
@@ -132,6 +133,7 @@ impl<'a> Parser<'a> {
     }
 
     fn class(&mut self) {
+        self.symbol_table.reset_class_table();
         self.ast.begin_elem("class").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Identifier);
@@ -157,16 +159,36 @@ impl<'a> Parser<'a> {
 
     fn class_var_dec(&mut self) {
         self.ast.begin_elem("classVarDec").unwrap();
+
+        let var_type: &str;
+        let kind = match self.keyword(self.current_token) {
+            "field" => &SymbolKind::Field,
+            "static" => &SymbolKind::Static,
+            _ => panic!("Unknown kind"),
+        };
         self.expect(TokenType::Keyword);
 
-        if !self.eat(TokenType::Keyword) {
-            self.eat(TokenType::Identifier);
+        match self.current_token {
+            Token::Keyword(_, lexeme) => {
+                var_type = lexeme;
+                self.expect(TokenType::Keyword);
+            }
+            Token::Identifier(id) => {
+                var_type = id;
+                self.expect(TokenType::Identifier);
+            }
+            _ => panic!("Unexpected token type"),
         }
 
         while self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ';'
         {
-            self.expect(TokenType::Identifier);
+            if let Token::Identifier(name) = self.current_token {
+                self.symbol_table.define(name, var_type, kind);
+                self.expect(TokenType::Identifier);
+            } else {
+                panic!("Unexpected token type");
+            }
 
             if self.symbol(self.current_token) == ',' {
                 self.expect(TokenType::Symbol);
@@ -178,6 +200,7 @@ impl<'a> Parser<'a> {
     }
 
     fn subroutine_dec(&mut self) {
+        self.symbol_table.reset_subroutine_table();
         self.ast.begin_elem("subroutineDec").unwrap();
         self.expect(TokenType::Keyword);
 
@@ -210,9 +233,29 @@ impl<'a> Parser<'a> {
         while self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ')'
         {
-            if !self.eat(TokenType::Identifier) {
-                self.eat(TokenType::Keyword);
+            let arg_type: &str;
+            let name: &str;
+            match self.current_token {
+                Token::Keyword(_, lexeme) => {
+                    arg_type = lexeme;
+                    self.expect(TokenType::Keyword);
+                }
+                Token::Identifier(id) => {
+                    arg_type = id;
+                    self.expect(TokenType::Identifier);
+                }
+                _ => panic!("Unknown argument type"),
             }
+
+            if let Token::Identifier(id) = self.current_token {
+                name = id;
+                self.expect(TokenType::Identifier);
+            } else {
+                panic!("Unexpected token");
+            }
+
+            self.symbol_table
+                .define(name, arg_type, &SymbolKind::Argument);
 
             if self.symbol(self.current_token) == ',' {
                 self.eat(TokenType::Symbol);
@@ -226,20 +269,34 @@ impl<'a> Parser<'a> {
         self.ast.begin_elem("varDec").unwrap();
         self.expect(TokenType::Keyword);
 
-        if !self.eat(TokenType::Keyword) {
-            self.eat(TokenType::Identifier);
+        let var_type: &str;
+        match self.current_token {
+            Token::Keyword(_, lexeme) => {
+                var_type = lexeme;
+                self.expect(TokenType::Keyword);
+            }
+            Token::Identifier(id) => {
+                var_type = id;
+                self.expect(TokenType::Identifier);
+            }
+            _ => panic!("Unknown variable type"),
         }
 
         while self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ';'
         {
             if !self.eat(TokenType::Symbol) {
-                self.eat(TokenType::Identifier);
+                if let Token::Identifier(id) = self.current_token {
+                    self.symbol_table
+                        .define(id, var_type, &SymbolKind::Variable);
+                    self.expect(TokenType::Identifier);
+                } else {
+                    panic!("Unknown token type");
+                }
             }
         }
 
         self.expect(TokenType::Symbol);
-
         self.ast.end_elem().unwrap();
     }
 
