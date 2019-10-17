@@ -19,6 +19,7 @@ pub struct Parser<'a> {
     symbol_table: SymbolTable<'a>,
     codegen: Codegen,
     label_counter: u16,
+    class_name: &'a str,
 }
 
 impl<'a> Parser<'a> {
@@ -31,6 +32,7 @@ impl<'a> Parser<'a> {
             symbol_table: SymbolTable::new(),
             codegen: Codegen::new(),
             label_counter: 0,
+            class_name: "",
         }
     }
 
@@ -147,6 +149,8 @@ impl<'a> Parser<'a> {
         self.symbol_table.reset_class_table();
         self.ast.begin_elem("class").unwrap();
         self.expect(TokenType::Keyword);
+
+        self.class_name = self.identifier(self.current_token);
         self.expect(TokenType::Identifier);
         self.expect(TokenType::Symbol);
 
@@ -213,12 +217,30 @@ impl<'a> Parser<'a> {
     fn subroutine_dec(&mut self) {
         self.symbol_table.reset_subroutine_table();
         self.ast.begin_elem("subroutineDec").unwrap();
+
+        let subroutine_type = self.keyword(self.current_token);
         self.expect(TokenType::Keyword);
 
-        if !self.eat(TokenType::Keyword) {
-            self.eat(TokenType::Identifier);
+        if subroutine_type == "method" {
+            self.symbol_table
+                .define("this", self.class_name, &SymbolKind::Argument)
         }
 
+        match self.current_token {
+            Token::Keyword(_, _lexeme) => {
+                self.expect(TokenType::Keyword);
+            }
+            Token::Identifier(_id) => {
+                self.expect(TokenType::Identifier);
+            }
+            _ => panic!("Not supported return type in {}", subroutine_type),
+        }
+
+        let subroutine_name = format!(
+            "{}.{}",
+            self.class_name,
+            self.identifier(self.current_token)
+        );
         self.expect(TokenType::Identifier);
         self.expect(TokenType::Symbol);
 
@@ -230,6 +252,21 @@ impl<'a> Parser<'a> {
 
         while self.keyword(self.current_token) == "var" {
             self.var_dec();
+        }
+
+        self.codegen.emit_function(
+            &subroutine_name,
+            self.symbol_table.get_variables_count(&SymbolKind::Local),
+        );
+
+        if subroutine_type == "constructor" {
+            let fields_count = self.symbol_table.get_variables_count(&SymbolKind::Field);
+            self.codegen.emit_push(&VMSegment::Constant, fields_count);
+            self.codegen.emit_call("Memory.alloc", 1);
+            self.codegen.emit_pop(&VMSegment::Pointer, 0);
+        } else if subroutine_type == "method" {
+            self.codegen.emit_push(&VMSegment::Argument, 0);
+            self.codegen.emit_pop(&VMSegment::Pointer, 0);
         }
 
         self.statements();
@@ -329,23 +366,14 @@ impl<'a> Parser<'a> {
 
     fn do_statement(&mut self) {
         self.ast.begin_elem("doStatement").unwrap();
-
-        let mut fn_name: String;
         self.expect(TokenType::Keyword);
 
-        fn_name = String::from(self.identifier(self.current_token));
+        let fn_name = self.identifier(self.current_token);
         self.expect(TokenType::Identifier);
 
-        if self.symbol(self.current_token) == '.' {
-            self.expect(TokenType::Symbol);
-            fn_name += &format!(".{}", self.identifier(self.current_token));
-            self.expect(TokenType::Identifier);
-        }
+        let _args_counts = self.subroutine_call(fn_name);
+        self.codegen.emit_pop(&VMSegment::Temp, 0);
 
-        self.expect(TokenType::Symbol);
-        let args_count = self.expression_list();
-        self.codegen.emit_call(&fn_name, args_count);
-        self.expect(TokenType::Symbol);
         self.expect(TokenType::Symbol);
         self.ast.end_elem().unwrap();
     }
@@ -353,16 +381,40 @@ impl<'a> Parser<'a> {
     fn let_statement(&mut self) {
         self.ast.begin_elem("letStatement").unwrap();
         self.expect(TokenType::Keyword);
+
+        let var_name = self.identifier(self.current_token);
+        let segment = match self
+            .symbol_table
+            .get_kind_of(var_name)
+            .expect("Variable not found")
+        {
+            SymbolKind::Argument => VMSegment::Argument,
+            SymbolKind::Field => VMSegment::This,
+            SymbolKind::Static => VMSegment::Static,
+            SymbolKind::Local => VMSegment::Local,
+        };
+
+        let index = self.symbol_table.get_index_of(var_name).unwrap();
         self.expect(TokenType::Identifier);
 
         if self.symbol(self.current_token) == '[' {
             self.expect(TokenType::Symbol);
             self.expression();
+            self.codegen.emit_push(&segment, index);
+            self.codegen.emit_arithmetic(&VMArithmetic::Add);
             self.expect(TokenType::Symbol);
+            self.expect(TokenType::Symbol);
+            self.expression();
+            self.codegen.emit_pop(&VMSegment::Temp, 0);
+            self.codegen.emit_pop(&VMSegment::Pointer, 1);
+            self.codegen.emit_push(&VMSegment::Temp, 0);
+            self.codegen.emit_pop(&VMSegment::That, 0);
+        } else {
+            self.expect(TokenType::Symbol);
+            self.expression();
+            self.codegen.emit_pop(&segment, index);
         }
 
-        self.expect(TokenType::Symbol);
-        self.expression();
         self.expect(TokenType::Symbol);
         self.ast.end_elem().unwrap();
     }
@@ -397,8 +449,11 @@ impl<'a> Parser<'a> {
             || self.symbol(self.current_token) != ';'
         {
             self.expression();
+        } else {
+            self.codegen.emit_push(&VMSegment::Constant, 0);
         }
 
+        self.codegen.emit_return();
         self.expect(TokenType::Symbol);
         self.ast.end_elem().unwrap();
     }
@@ -426,10 +481,10 @@ impl<'a> Parser<'a> {
             self.expect(TokenType::Keyword);
             self.expect(TokenType::Symbol);
             self.statements();
-            self.codegen.emit_label(&label_l2);
             self.expect(TokenType::Symbol);
         }
 
+        self.codegen.emit_label(&label_l2);
         self.ast.end_elem().unwrap();
     }
 
@@ -447,21 +502,22 @@ impl<'a> Parser<'a> {
             || self.symbol(self.current_token) == '>'
             || self.symbol(self.current_token) == '='
         {
-            let arithmetic = match self.symbol(self.current_token) {
-                '+' => VMArithmetic::Add,
-                '&' => VMArithmetic::And,
-                '=' => VMArithmetic::Eq,
-                '>' => VMArithmetic::Gt,
-                '<' => VMArithmetic::Lt,
-                '-' => VMArithmetic::Sub,
-                '|' => VMArithmetic::Or,
-                '/' | '*' => VMArithmetic::Add, // TODO: implement mul and div
-                _ => panic!("not supported on vm level"),
-            };
-
+            let operator = self.symbol(self.current_token);
             self.expect(TokenType::Symbol);
             self.term();
-            self.codegen.emit_arithmetic(&arithmetic);
+
+            match operator {
+                '+' => self.codegen.emit_arithmetic(&VMArithmetic::Add),
+                '-' => self.codegen.emit_arithmetic(&VMArithmetic::Sub),
+                '*' => self.codegen.emit_call("Math.multiply", 2),
+                '/' => self.codegen.emit_call("Math.divide", 2),
+                '&' => self.codegen.emit_arithmetic(&VMArithmetic::And),
+                '|' => self.codegen.emit_arithmetic(&VMArithmetic::Or),
+                '<' => self.codegen.emit_arithmetic(&VMArithmetic::Lt),
+                '>' => self.codegen.emit_arithmetic(&VMArithmetic::Gt),
+                '=' => self.codegen.emit_arithmetic(&VMArithmetic::Eq),
+                _ => panic!("Unknown operator {}", operator),
+            }
         }
 
         self.ast.end_elem().unwrap();
@@ -475,19 +531,47 @@ impl<'a> Parser<'a> {
                 self.codegen.emit_push(&VMSegment::Constant, *int);
                 self.expect(TokenType::IntegerLiteral)
             }
-            Token::StringLiteral(_) => self.expect(TokenType::StringLiteral),
-            Token::Keyword(_, _) => self.expect(TokenType::Keyword),
-            Token::Symbol(symbol, _lexeme) => {
-                if symbol == &Symbol::Minus || symbol == &Symbol::Tilde {
-                    let arithmetic = match symbol {
-                        Symbol::Minus => VMArithmetic::Neg,
-                        Symbol::Tilde => VMArithmetic::Not,
-                        _ => panic!("Not supported arithmetic"),
-                    };
+            Token::StringLiteral(string) => {
+                let chars: Vec<u8> = string.bytes().collect();
+                self.codegen
+                    .emit_push(&VMSegment::Constant, chars.len() as u16);
+                self.codegen.emit_call("String.new", 1);
 
+                for c in chars {
+                    self.codegen.emit_push(&VMSegment::Constant, u16::from(c));
+                    self.codegen.emit_call("String.appendChar", 2);
+                }
+
+                self.expect(TokenType::StringLiteral);
+            }
+            Token::Keyword(keyword, lexeme) => {
+                match keyword {
+                    Keyword::True => {
+                        self.codegen.emit_push(&VMSegment::Constant, 0);
+                        self.codegen.emit_arithmetic(&VMArithmetic::Not);
+                    }
+                    Keyword::False | Keyword::Null => {
+                        self.codegen.emit_push(&VMSegment::Constant, 0);
+                    }
+                    Keyword::This => {
+                        self.codegen.emit_push(&VMSegment::Pointer, 0);
+                    }
+                    _ => panic!("Not supported keyword {}", lexeme),
+                };
+
+                self.expect(TokenType::Keyword)
+            }
+            Token::Symbol(symbol, lexeme) => {
+                if symbol == &Symbol::Minus || symbol == &Symbol::Tilde {
+                    let operator = self.symbol(self.current_token);
                     self.expect(TokenType::Symbol);
                     self.term();
-                    self.codegen.emit_arithmetic(&arithmetic);
+
+                    match operator {
+                        '-' => self.codegen.emit_arithmetic(&VMArithmetic::Neg),
+                        '~' => self.codegen.emit_arithmetic(&VMArithmetic::Not),
+                        _ => panic!("Not supported operator {} here", lexeme),
+                    }
                 } else {
                     self.expect(TokenType::Symbol);
                     self.expression();
@@ -495,40 +579,44 @@ impl<'a> Parser<'a> {
                 }
             }
             Token::Identifier(id) => {
-                if let Option::Some(symbol) = self.symbol_table.get_symbol(id) {
-                    let kind = match symbol.kind {
-                        SymbolKind::Argument => &VMSegment::Argument,
-                        SymbolKind::Field => &VMSegment::This,
-                        SymbolKind::Local => &VMSegment::Local,
-                        SymbolKind::Static => &VMSegment::Static,
-                    };
-
-                    let index = symbol.index;
-                    self.codegen.emit_push(kind, index);
-                }
-
                 self.expect(TokenType::Identifier);
 
-                if self.token_type(self.current_token) == TokenType::Symbol {
+                if self.symbol(self.current_token) == '(' || self.symbol(self.current_token) == '.'
+                {
+                    self.subroutine_call(id);
+                } else {
+                    let kind = self
+                        .symbol_table
+                        .get_kind_of(&id)
+                        .expect("Unresolved variable name");
+
+                    let segment = match kind {
+                        SymbolKind::Argument => VMSegment::Argument,
+                        SymbolKind::Field => VMSegment::This,
+                        SymbolKind::Static => VMSegment::Static,
+                        SymbolKind::Local => VMSegment::Local,
+                    };
+
+                    let running_index = self
+                        .symbol_table
+                        .get_index_of(id)
+                        .expect("Unresolved variable name");
+
                     if self.symbol(self.current_token) == '[' {
                         self.expect(TokenType::Symbol);
                         self.expression();
+                        self.codegen.emit_push(&segment, running_index);
+                        self.codegen.emit_arithmetic(&VMArithmetic::Add);
+                        self.codegen.emit_pop(&VMSegment::Pointer, 1);
+                        self.codegen.emit_push(&VMSegment::That, 0);
                         self.expect(TokenType::Symbol);
-                    } else if self.symbol(self.current_token) == '(' {
-                        self.expect(TokenType::Symbol);
-                        let args_count = self.expression_list();
-                        self.expect(TokenType::Symbol);
-                        self.codegen.emit_call(id, args_count);
-                    } else if self.symbol(self.current_token) == '.' {
-                        self.expect(TokenType::Symbol);
-                        self.expect(TokenType::Identifier);
-                        self.expect(TokenType::Symbol);
-                        self.expression_list();
-                        self.expect(TokenType::Symbol);
+                    } else {
+                        self.codegen.emit_push(&segment, running_index);
                     }
                 }
             }
         }
+
         self.ast.end_elem().unwrap();
     }
 
@@ -545,10 +633,54 @@ impl<'a> Parser<'a> {
             while self.symbol(self.current_token) == ',' {
                 self.expect(TokenType::Symbol);
                 self.expression();
+                expressions_count += 1;
             }
         }
 
         self.ast.end_elem().unwrap();
         expressions_count
+    }
+
+    fn subroutine_call(&mut self, fn_name: &str) -> u16 {
+        let subroutine_name: String;
+        let mut args_count = 0;
+
+        if self.symbol(self.current_token) == '.' {
+            self.expect(TokenType::Symbol);
+
+            match self.symbol_table.get_type_of(fn_name) {
+                Option::Some(var_type) => {
+                    let segment = match self.symbol_table.get_kind_of(fn_name).unwrap() {
+                        SymbolKind::Argument => VMSegment::Argument,
+                        SymbolKind::Field => VMSegment::This,
+                        SymbolKind::Static => VMSegment::Static,
+                        SymbolKind::Local => VMSegment::Local,
+                    };
+
+                    let running_index = self.symbol_table.get_index_of(fn_name).unwrap();
+                    subroutine_name =
+                        format!("{}.{}", var_type, self.identifier(self.current_token));
+                    self.codegen.emit_push(&segment, running_index);
+                    args_count = 1;
+                }
+                Option::None => {
+                    subroutine_name =
+                        format!("{}.{}", fn_name, self.identifier(self.current_token));
+                }
+            }
+
+            self.expect(TokenType::Identifier);
+        } else {
+            subroutine_name = format!("{}.{}", self.class_name, fn_name);
+            self.codegen.emit_push(&VMSegment::Pointer, 0);
+            args_count = 1;
+        }
+
+        self.expect(TokenType::Symbol);
+        args_count += self.expression_list();
+        self.expect(TokenType::Symbol);
+        self.codegen.emit_call(&subroutine_name, args_count);
+
+        args_count
     }
 }
