@@ -5,14 +5,14 @@ pub enum SymbolKind {
     Field,
     Static,
     Argument,
-    Variable,
+    Local,
 }
 
 #[derive(Debug)]
 pub struct Symbol<'a> {
-    r#type: &'a str,
-    kind: &'a SymbolKind,
-    index: u16,
+    pub r#type: &'a str,
+    pub kind: &'a SymbolKind,
+    pub index: u16,
 }
 
 #[derive(Default, Debug)]
@@ -22,7 +22,7 @@ pub struct SymbolTable<'a> {
     static_index: u16,
     field_index: u16,
     argument_index: u16,
-    variable_index: u16,
+    local_index: u16,
 }
 
 impl<'a> SymbolTable<'a> {
@@ -33,7 +33,7 @@ impl<'a> SymbolTable<'a> {
             static_index: 0,
             field_index: 0,
             argument_index: 0,
-            variable_index: 0,
+            local_index: 0,
         }
     }
 
@@ -58,8 +58,8 @@ impl<'a> SymbolTable<'a> {
                 self.argument_index += 1;
                 self.subroutine_symbols.insert(name, symbol);
             }
-            SymbolKind::Variable => {
-                self.variable_index += 1;
+            SymbolKind::Local => {
+                self.local_index += 1;
                 self.subroutine_symbols.insert(name, symbol);
             }
         };
@@ -70,7 +70,7 @@ impl<'a> SymbolTable<'a> {
             SymbolKind::Argument => self.argument_index,
             SymbolKind::Field => self.field_index,
             SymbolKind::Static => self.static_index,
-            SymbolKind::Variable => self.variable_index,
+            SymbolKind::Local => self.local_index,
         }
     }
 
@@ -112,7 +112,7 @@ impl<'a> SymbolTable<'a> {
     }
 
     pub fn reset_subroutine_table(&mut self) {
-        self.variable_index = 0;
+        self.local_index = 0;
         self.argument_index = 0;
         self.subroutine_symbols.clear();
     }
@@ -128,8 +128,17 @@ impl<'a> SymbolTable<'a> {
             "argument" => SymbolKind::Argument,
             "field" => SymbolKind::Field,
             "static" => SymbolKind::Static,
-            "variable" => SymbolKind::Variable,
+            "local" => SymbolKind::Local,
             _ => panic!("Unknown kind {}", kind),
+        }
+    }
+
+    pub fn kind_to_str(kind: &SymbolKind) -> &'a str {
+        match kind {
+            SymbolKind::Argument => "argument",
+            SymbolKind::Field => "field",
+            SymbolKind::Static => "static",
+            SymbolKind::Local => "local",
         }
     }
 }

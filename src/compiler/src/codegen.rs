@@ -1,23 +1,24 @@
 pub enum VMSegment {
     Argument,
+    Constant,
     Local,
-    Static,
-    This,
-    That,
     Pointer,
+    Static,
     Temp,
+    That,
+    This,
 }
 
 pub enum VMArithmetic {
     Add,
-    Sub,
-    Neg,
+    And,
     Eq,
     Gt,
     Lt,
-    And,
-    Or,
+    Neg,
     Not,
+    Or,
+    Sub,
 }
 
 #[derive(Default)]
@@ -48,38 +49,39 @@ impl Codegen {
 
     pub fn emit_arithmetic(&mut self, arithmetic: &VMArithmetic) {
         let command = Codegen::arithmetic_to_str(arithmetic);
-        self.vm_code.push_str(&command);
+        self.vm_code.push_str(&format!("{}\n", command));
     }
 
     pub fn emit_label(&mut self, label: &str) {
-        self.vm_code.push_str(&format!("label {}", label));
+        self.vm_code.push_str(&format!("label {}\n", label));
     }
 
     pub fn emit_goto(&mut self, label: &str) {
-        self.vm_code.push_str(&format!("goto {}", label));
+        self.vm_code.push_str(&format!("goto {}\n", label));
     }
 
     pub fn emit_if_goto(&mut self, label: &str) {
-        self.vm_code.push_str(&format!("if-goto {}", label));
+        self.vm_code.push_str(&format!("if-goto {}\n", label));
     }
 
     pub fn emit_call(&mut self, name: &str, args_count: u16) {
         self.vm_code
-            .push_str(&format!("call {} {}", name, args_count));
+            .push_str(&format!("call {} {}\n", name, args_count));
     }
 
     pub fn emit_function(&mut self, name: &str, locals_count: u16) {
         self.vm_code
-            .push_str(&format!("function {} {}", name, locals_count));
+            .push_str(&format!("function {} {}\n", name, locals_count));
     }
 
     pub fn emit_return(&mut self) {
-        self.vm_code.push_str("return");
+        self.vm_code.push_str("return\n");
     }
 
     fn segment_to_str(segment: &VMSegment) -> &str {
         match segment {
             VMSegment::Argument => "argument",
+            VMSegment::Constant => "constant",
             VMSegment::Local => "local",
             VMSegment::Static => "static",
             VMSegment::This => "this",

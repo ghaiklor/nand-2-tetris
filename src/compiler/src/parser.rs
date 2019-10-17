@@ -1,4 +1,6 @@
 use crate::codegen::Codegen;
+use crate::codegen::VMArithmetic;
+use crate::codegen::VMSegment;
 use crate::symbol_table::SymbolKind;
 use crate::symbol_table::SymbolTable;
 use crate::token::*;
@@ -16,6 +18,7 @@ pub struct Parser<'a> {
     ast: XmlWriter<'a, File>,
     symbol_table: SymbolTable<'a>,
     codegen: Codegen,
+    label_counter: u16,
 }
 
 impl<'a> Parser<'a> {
@@ -27,6 +30,7 @@ impl<'a> Parser<'a> {
             ast: XmlWriter::new(tempfile().expect("Can not open AST file for writing")),
             symbol_table: SymbolTable::new(),
             codegen: Codegen::new(),
+            label_counter: 0,
         }
     }
 
@@ -98,6 +102,13 @@ impl<'a> Parser<'a> {
     fn keyword(&self, token: &'a Token) -> &'a str {
         match token {
             Token::Keyword(_keyword, lexeme) => lexeme,
+            _ => "",
+        }
+    }
+
+    fn identifier(&self, token: &'a Token) -> &'a str {
+        match token {
+            Token::Identifier(id) => id,
             _ => "",
         }
     }
@@ -287,8 +298,7 @@ impl<'a> Parser<'a> {
         {
             if !self.eat(TokenType::Symbol) {
                 if let Token::Identifier(id) = self.current_token {
-                    self.symbol_table
-                        .define(id, var_type, &SymbolKind::Variable);
+                    self.symbol_table.define(id, var_type, &SymbolKind::Local);
                     self.expect(TokenType::Identifier);
                 } else {
                     panic!("Unknown token type");
@@ -319,16 +329,22 @@ impl<'a> Parser<'a> {
 
     fn do_statement(&mut self) {
         self.ast.begin_elem("doStatement").unwrap();
+
+        let mut fn_name: String;
         self.expect(TokenType::Keyword);
+
+        fn_name = String::from(self.identifier(self.current_token));
         self.expect(TokenType::Identifier);
 
         if self.symbol(self.current_token) == '.' {
             self.expect(TokenType::Symbol);
+            fn_name += &format!(".{}", self.identifier(self.current_token));
             self.expect(TokenType::Identifier);
         }
 
         self.expect(TokenType::Symbol);
-        self.expression_list();
+        let args_count = self.expression_list();
+        self.codegen.emit_call(&fn_name, args_count);
         self.expect(TokenType::Symbol);
         self.expect(TokenType::Symbol);
         self.ast.end_elem().unwrap();
@@ -352,13 +368,23 @@ impl<'a> Parser<'a> {
     }
 
     fn while_statement(&mut self) {
+        let label_l1 = format!("L{}", self.label_counter);
+        self.label_counter += 1;
+        let label_l2 = format!("L{}", self.label_counter);
+        self.label_counter += 1;
+
         self.ast.begin_elem("whileStatement").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Symbol);
+        self.codegen.emit_label(&label_l1);
         self.expression();
+        self.codegen.emit_arithmetic(&VMArithmetic::Not);
+        self.codegen.emit_if_goto(&label_l2);
         self.expect(TokenType::Symbol);
         self.expect(TokenType::Symbol);
         self.statements();
+        self.codegen.emit_goto(&label_l1);
+        self.codegen.emit_label(&label_l2);
         self.expect(TokenType::Symbol);
         self.ast.end_elem().unwrap();
     }
@@ -378,19 +404,29 @@ impl<'a> Parser<'a> {
     }
 
     fn if_statement(&mut self) {
+        let label_l1 = format!("L{}", self.label_counter);
+        self.label_counter += 1;
+        let label_l2 = format!("L{}", self.label_counter);
+        self.label_counter += 1;
+
         self.ast.begin_elem("ifStatement").unwrap();
         self.expect(TokenType::Keyword);
         self.expect(TokenType::Symbol);
         self.expression();
+        self.codegen.emit_arithmetic(&VMArithmetic::Not);
+        self.codegen.emit_if_goto(&label_l1);
         self.expect(TokenType::Symbol);
         self.expect(TokenType::Symbol);
         self.statements();
+        self.codegen.emit_goto(&label_l2);
+        self.codegen.emit_label(&label_l1);
         self.expect(TokenType::Symbol);
 
         if self.keyword(self.current_token) == "else" {
             self.expect(TokenType::Keyword);
             self.expect(TokenType::Symbol);
             self.statements();
+            self.codegen.emit_label(&label_l2);
             self.expect(TokenType::Symbol);
         }
 
@@ -411,8 +447,21 @@ impl<'a> Parser<'a> {
             || self.symbol(self.current_token) == '>'
             || self.symbol(self.current_token) == '='
         {
+            let arithmetic = match self.symbol(self.current_token) {
+                '+' => VMArithmetic::Add,
+                '&' => VMArithmetic::And,
+                '=' => VMArithmetic::Eq,
+                '>' => VMArithmetic::Gt,
+                '<' => VMArithmetic::Lt,
+                '-' => VMArithmetic::Sub,
+                '|' => VMArithmetic::Or,
+                '/' | '*' => VMArithmetic::Add, // TODO: implement mul and div
+                _ => panic!("not supported on vm level"),
+            };
+
             self.expect(TokenType::Symbol);
             self.term();
+            self.codegen.emit_arithmetic(&arithmetic);
         }
 
         self.ast.end_elem().unwrap();
@@ -422,20 +471,42 @@ impl<'a> Parser<'a> {
         self.ast.begin_elem("term").unwrap();
 
         match self.current_token {
-            Token::IntegerLiteral(_) => self.expect(TokenType::IntegerLiteral),
+            Token::IntegerLiteral(int) => {
+                self.codegen.emit_push(&VMSegment::Constant, *int);
+                self.expect(TokenType::IntegerLiteral)
+            }
             Token::StringLiteral(_) => self.expect(TokenType::StringLiteral),
             Token::Keyword(_, _) => self.expect(TokenType::Keyword),
             Token::Symbol(symbol, _lexeme) => {
                 if symbol == &Symbol::Minus || symbol == &Symbol::Tilde {
+                    let arithmetic = match symbol {
+                        Symbol::Minus => VMArithmetic::Neg,
+                        Symbol::Tilde => VMArithmetic::Not,
+                        _ => panic!("Not supported arithmetic"),
+                    };
+
                     self.expect(TokenType::Symbol);
                     self.term();
+                    self.codegen.emit_arithmetic(&arithmetic);
                 } else {
                     self.expect(TokenType::Symbol);
                     self.expression();
                     self.expect(TokenType::Symbol);
                 }
             }
-            Token::Identifier(_id) => {
+            Token::Identifier(id) => {
+                if let Option::Some(symbol) = self.symbol_table.get_symbol(id) {
+                    let kind = match symbol.kind {
+                        SymbolKind::Argument => &VMSegment::Argument,
+                        SymbolKind::Field => &VMSegment::This,
+                        SymbolKind::Local => &VMSegment::Local,
+                        SymbolKind::Static => &VMSegment::Static,
+                    };
+
+                    let index = symbol.index;
+                    self.codegen.emit_push(kind, index);
+                }
+
                 self.expect(TokenType::Identifier);
 
                 if self.token_type(self.current_token) == TokenType::Symbol {
@@ -445,8 +516,9 @@ impl<'a> Parser<'a> {
                         self.expect(TokenType::Symbol);
                     } else if self.symbol(self.current_token) == '(' {
                         self.expect(TokenType::Symbol);
-                        self.expression_list();
+                        let args_count = self.expression_list();
                         self.expect(TokenType::Symbol);
+                        self.codegen.emit_call(id, args_count);
                     } else if self.symbol(self.current_token) == '.' {
                         self.expect(TokenType::Symbol);
                         self.expect(TokenType::Identifier);
@@ -460,13 +532,15 @@ impl<'a> Parser<'a> {
         self.ast.end_elem().unwrap();
     }
 
-    fn expression_list(&mut self) {
+    fn expression_list(&mut self) -> u16 {
         self.ast.begin_elem("expressionList").unwrap();
 
+        let mut expressions_count = 0;
         if self.token_type(self.current_token) != TokenType::Symbol
             || self.symbol(self.current_token) != ')'
         {
             self.expression();
+            expressions_count += 1;
 
             while self.symbol(self.current_token) == ',' {
                 self.expect(TokenType::Symbol);
@@ -475,5 +549,6 @@ impl<'a> Parser<'a> {
         }
 
         self.ast.end_elem().unwrap();
+        expressions_count
     }
 }
