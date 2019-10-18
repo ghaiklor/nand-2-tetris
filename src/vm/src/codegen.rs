@@ -19,14 +19,14 @@ impl Codegen {
     pub fn codegen(&mut self, opcodes: &[OpCode]) -> String {
         for opcode in opcodes {
             match opcode {
-                OpCode::Add => self.emit_2_args_computation("M+D", "add"),
+                OpCode::Add => self.emit_2_args_computation("D+M", "add"),
                 OpCode::Sub => self.emit_2_args_computation("M-D", "sub"),
                 OpCode::Neg => self.emit_1_args_computation("-D", "neg"),
                 OpCode::Eq => self.emit_comparable_computation("JEQ", "eq"),
                 OpCode::Gt => self.emit_comparable_computation("JGT", "gt"),
                 OpCode::Lt => self.emit_comparable_computation("JLT", "lt"),
-                OpCode::And => self.emit_2_args_computation("M&D", "and"),
-                OpCode::Or => self.emit_2_args_computation("M|D", "or"),
+                OpCode::And => self.emit_2_args_computation("D&M", "and"),
+                OpCode::Or => self.emit_2_args_computation("D|M", "or"),
                 OpCode::Not => self.emit_1_args_computation("!D", "not"),
                 OpCode::Return => self.emit_return(),
                 OpCode::Push(opcode) => self.emit_push(opcode),
@@ -189,7 +189,7 @@ impl Codegen {
                 // D = &(@segment + i)
                 self.emit_constant_to_d(opcode.i);
                 self.emit(&format!("@{}", segment));
-                self.emit("A=M+D");
+                self.emit("A=D+M");
                 self.emit("D=M");
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
