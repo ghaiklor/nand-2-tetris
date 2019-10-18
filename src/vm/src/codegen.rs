@@ -21,13 +21,13 @@ impl Codegen {
             match opcode {
                 OpCode::Add => self.emit_2_args_computation("D+M", "add"),
                 OpCode::Sub => self.emit_2_args_computation("M-D", "sub"),
-                OpCode::Neg => self.emit_1_args_computation("-D", "neg"),
+                OpCode::Neg => self.emit_1_args_computation("-M", "neg"),
                 OpCode::Eq => self.emit_comparable_computation("JEQ", "eq"),
                 OpCode::Gt => self.emit_comparable_computation("JGT", "gt"),
                 OpCode::Lt => self.emit_comparable_computation("JLT", "lt"),
                 OpCode::And => self.emit_2_args_computation("D&M", "and"),
                 OpCode::Or => self.emit_2_args_computation("D|M", "or"),
-                OpCode::Not => self.emit_1_args_computation("!D", "not"),
+                OpCode::Not => self.emit_1_args_computation("!M", "not"),
                 OpCode::Return => self.emit_return(),
                 OpCode::Push(opcode) => self.emit_push(opcode),
                 OpCode::Pop(opcode) => self.emit_pop(opcode),
@@ -120,29 +120,23 @@ impl Codegen {
 
     fn emit_1_args_computation(&mut self, computation: &str, comment: &str) {
         self.emit_comment(comment);
-        self.emit_sp_dec();
-        self.emit_stack_to_d();
-        self.emit(&format!("D={}", computation));
-        self.emit_d_to_stack();
-        self.emit_sp_inc();
+        self.emit("@SP");
+        self.emit("A=M-1");
+        self.emit(&format!("M={}", computation));
     }
 
     fn emit_2_args_computation(&mut self, computation: &str, comment: &str) {
         self.emit_comment(comment);
-        self.emit_sp_dec();
-        self.emit_stack_to_d();
-        self.emit_sp_dec();
         self.emit("@SP");
-        self.emit("A=M");
-        self.emit(&format!("D={}", computation));
-        self.emit_d_to_stack();
-        self.emit_sp_inc();
+        self.emit("AM=M-1");
+        self.emit("D=M");
+        self.emit("A=A-1");
+        self.emit(&format!("M={}", computation));
     }
 
     fn emit_comparable_computation(&mut self, comparator: &str, comment: &str) {
         self.emit_2_args_computation("M-D", comment);
-        self.emit_sp_dec();
-        self.emit_stack_to_d();
+        self.emit("D=M");
 
         self.emit(&format!(
             "@__{}_{}_{}",
@@ -150,7 +144,7 @@ impl Codegen {
         ));
         self.emit(&format!("D;{}", comparator));
         self.emit("@SP");
-        self.emit("A=M");
+        self.emit("A=M-1");
         self.emit("M=0");
         self.emit(&format!(
             "@__END_{}_{}_{}",
@@ -162,14 +156,13 @@ impl Codegen {
             comparator, self.filename, self.label_counter
         ));
         self.emit("@SP");
-        self.emit("A=M");
+        self.emit("A=M-1");
         self.emit("M=-1");
         self.emit(&format!(
             "(__END_{}_{}_{})",
             comparator, self.filename, self.label_counter
         ));
 
-        self.emit_sp_inc();
         self.label_counter += 1;
     }
 
@@ -187,9 +180,10 @@ impl Codegen {
                 };
 
                 // D = &(@segment + i)
-                self.emit_constant_to_d(opcode.i);
                 self.emit(&format!("@{}", segment));
-                self.emit("A=D+M");
+                self.emit("D=M");
+                self.emit(&format!("@{}", opcode.i));
+                self.emit("A=D+A");
                 self.emit("D=M");
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
@@ -208,9 +202,7 @@ impl Codegen {
             }
             "temp" => {
                 // D = &(i + 5)
-                self.emit_constant_to_d(opcode.i);
-                self.emit(&format!("@{}", 5));
-                self.emit("A=D+A");
+                self.emit(&format!("@{}", opcode.i + 5));
                 self.emit("D=M");
                 self.emit_d_to_stack();
                 self.emit_sp_inc();
