@@ -6,13 +6,9 @@
 [![GitHub followers](https://img.shields.io/github/followers/ghaiklor.svg?label=Follow&style=social)](https://github.com/ghaiklor)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ghaiklor.svg?label=Follow&style=social)](https://twitter.com/ghaiklor)
 
-_Work is still in progress!_
-
-In this repository, I implement all the tasks from nand2tetris course on Coursera. It contains all the source codes, starting from CPU gates (implemented in HDL language) to high-level language compilers and operating systems.
-
-> Why Bother? Because many CS students don't understand how computers work; because fewer CS programs requires a compilation course; because many computer architecture courses are too detailed; because nothing beats the thrill of creating something from almost nothing; because Nand to Tetris engages students in implementing some of the coolest algorithms, data structures and techniques in applied computer science, and because the typical student feedback in Nand to Tetris courses is "the best course I ever took". (c) nand2tetris.org
-
 - [nand-2-tetris](#nand-2-tetris)
+  - [What's this all about](#whats-this-all-about)
+  - [Demo](#demo)
   - [Project References](#project-references)
     - [Project 1: Boolean Logic](#project-1-boolean-logic)
     - [Project 2: Arithmetic Logical Unit (ALU)](#project-2-arithmetic-logical-unit-alu)
@@ -26,6 +22,26 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
     - [Project 10: Compiler I - Syntax Analysis](#project-10-compiler-i---syntax-analysis)
     - [Project 11: Compiler II - Code Generation](#project-11-compiler-ii---code-generation)
   - [License](#license)
+
+## What's this all about
+
+_Work is still in progress!_
+
+In this repository, I implement all the tasks from nand2tetris course on Coursera. It contains all the source codes, starting from CPU gates (implemented in HDL language) to high-level language compilers and operating systems.
+
+> Why Bother? Because many CS students don't understand how computers work; because fewer CS programs requires a compilation course; because many computer architecture courses are too detailed; because nothing beats the thrill of creating something from almost nothing; because Nand to Tetris engages students in implementing some of the coolest algorithms, data structures and techniques in applied computer science, and because the typical student feedback in Nand to Tetris courses is "the best course I ever took". (c) nand2tetris.org
+
+## Demo
+
+|      Pong Game       |      Compiler       |      VM Translator       |      Assembler       |
+| :------------------: | :-----------------: | :----------------------: | :------------------: |
+| ![1][Pong Game Demo] | ![1][Compiler Demo] | ![1][VM Translator Demo] | ![1][Assembler Demo] |
+
+_NOTE:_
+
+- Compiler (Jack language -> stack-based VM language)
+- VM Translator (stack-based VM language -> assembly)
+- Assembler (assembly -> binary code)
 
 ## Project References
 
@@ -77,7 +93,7 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 ### Project 7: The Virtual Machine
 
-> Java (or C#) compilers generate code written in an intermediate language called bytecode (or IL). This code is designed to run on a virtual machine architecture like the JVM (or CLR). One way to implement such VM programs is to translate them further into lower-level programs written in the machine language of some concrete (rather than virtual) host computer. In projects 7 and 8 we build such a VM translator, designed to translate programs written in the VM language into programs written in the Hack assembly language. The VM language, abstraction, and translation process are described in chapters 7 and 8 of the book. For the purpose of this project, chapter 8 can be ignored.
+> Java (or C#) compilers generate code written in an intermediate language called byte-code (or IL). This code is designed to run on a virtual machine architecture like the JVM (or CLR). One way to implement such VM programs is to translate them further into lower-level programs written in the machine language of some concrete (rather than virtual) host computer. In projects 7 and 8 we build such a VM translator, designed to translate programs written in the VM language into programs written in the Hack assembly language. The VM language, abstraction, and translation process are described in chapters 7 and 8 of the book. For the purpose of this project, chapter 8 can be ignored.
 
 [Source code for virtual machine code translator](./src/vm)
 
@@ -115,3 +131,8 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 All the materials used here are from [nand2tetris](https://www.nand2tetris.org) course.
 Which are shared by [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) license.
+
+[Pong Game Demo]: https://user-images.githubusercontent.com/3625244/67093349-192b7400-f1ba-11e9-92bd-1e96c2f5c850.gif
+[Compiler Demo]: https://user-images.githubusercontent.com/3625244/67094267-26e1f900-f1bc-11e9-904a-39ea0e0576fc.gif
+[VM Translator Demo]: https://user-images.githubusercontent.com/3625244/67094699-fc447000-f1bc-11e9-8a77-357134ac244a.gif
+[Assembler Demo]: https://user-images.githubusercontent.com/3625244/67094945-7a087b80-f1bd-11e9-9f01-2dc2941c422b.gif
