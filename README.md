@@ -39,6 +39,7 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 _NOTE:_
 
+- Pong Game (written in Jack language and compiled through all the tool-chain to binary code)
 - Compiler (Jack language -> stack-based VM language)
 - VM Translator (stack-based VM language -> assembly)
 - Assembler (assembly -> binary code)
