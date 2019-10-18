@@ -6,25 +6,6 @@
 [![GitHub followers](https://img.shields.io/github/followers/ghaiklor.svg?label=Follow&style=social)](https://github.com/ghaiklor)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ghaiklor.svg?label=Follow&style=social)](https://twitter.com/ghaiklor)
 
-- [nand-2-tetris](#nand-2-tetris)
-  - [What's this all about](#whats-this-all-about)
-  - [Demo](#demo)
-  - [Project References](#project-references)
-    - [Project 1: Boolean Logic](#project-1-boolean-logic)
-    - [Project 2: Arithmetic Logical Unit (ALU)](#project-2-arithmetic-logical-unit-alu)
-    - [Project 3: Sequential Chips](#project-3-sequential-chips)
-    - [Project 4: Machine Language Programming](#project-4-machine-language-programming)
-    - [Project 5: Computer Architecture](#project-5-computer-architecture)
-    - [Project 6: The Assembler](#project-6-the-assembler)
-    - [Project 7: The Virtual Machine](#project-7-the-virtual-machine)
-    - [Project 8: The Virtual Machine II](#project-8-the-virtual-machine-ii)
-    - [Project 9: High-Level Programming](#project-9-high-level-programming)
-    - [Project 10: Compiler I - Syntax Analysis](#project-10-compiler-i---syntax-analysis)
-    - [Project 11: Compiler II - Code Generation](#project-11-compiler-ii---code-generation)
-  - [License](#license)
-
-## What's this all about
-
 _Work is still in progress!_
 
 In this repository, I implement all the tasks from nand2tetris course on Coursera. It contains all the source codes, starting from CPU gates (implemented in HDL language) to high-level language compilers and operating systems.
