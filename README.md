@@ -12,6 +12,21 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 
 > Why Bother? Because many CS students don't understand how computers work; because fewer CS programs requires a compilation course; because many computer architecture courses are too detailed; because nothing beats the thrill of creating something from almost nothing; because Nand to Tetris engages students in implementing some of the coolest algorithms, data structures and techniques in applied computer science, and because the typical student feedback in Nand to Tetris courses is "the best course I ever took". (c) nand2tetris.org
 
+- [nand-2-tetris](#nand-2-tetris)
+  - [Project References](#project-references)
+    - [Project 1: Boolean Logic](#project-1-boolean-logic)
+    - [Project 2: Arithmetic Logical Unit (ALU)](#project-2-arithmetic-logical-unit-alu)
+    - [Project 3: Sequential Chips](#project-3-sequential-chips)
+    - [Project 4: Machine Language Programming](#project-4-machine-language-programming)
+    - [Project 5: Computer Architecture](#project-5-computer-architecture)
+    - [Project 6: The Assembler](#project-6-the-assembler)
+    - [Project 7: The Virtual Machine](#project-7-the-virtual-machine)
+    - [Project 8: The Virtual Machine II](#project-8-the-virtual-machine-ii)
+    - [Project 9: High-Level Programming](#project-9-high-level-programming)
+    - [Project 10: Compiler I - Syntax Analysis](#project-10-compiler-i---syntax-analysis)
+    - [Project 11: Compiler II - Code Generation](#project-11-compiler-ii---code-generation)
+  - [License](#license)
+
 ## Project References
 
 ### Project 1: Boolean Logic
@@ -85,6 +100,12 @@ In this repository, I implement all the tasks from nand2tetris course on Courser
 ### Project 10: Compiler I - Syntax Analysis
 
 > The Jack compiler, like those of Java and C#, is two-tiered: the compiler's front-end translates from the high-level language to an intermediate VM language; the compiler's back-end translates further from the VM language to the native code of the host platform. In projects 7-8 we've built the compiler's back-end (the VM translator); we now turn to building the compiler's front-end. This development will span two projects: syntax analysis (this project), and code generation (next project). Welcome to syntax analysis.
+
+[Source code for compiler](./src/compiler)
+
+### Project 11: Compiler II - Code Generation
+
+> In this project we complete the construction of the Jack Compiler that we started building in the previous project.
 
 [Source code for compiler](./src/compiler)
 
