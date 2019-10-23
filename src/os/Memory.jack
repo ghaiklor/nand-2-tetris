@@ -7,28 +7,151 @@
  * This library provides two services: direct access to the computer's main
  * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
  * consists of 32,768 words, each holding a 16-bit binary number.
- */ 
+ */
 class Memory {
+    static Array ram;
+    static Array heap;
+
+    static int HEAPBASE;
+    static int HEAPMAX;
+    static int HEAPSIZE;
+    static int NEXT;
+    static int LENGTH;
 
     /** Initializes the class. */
     function void init() {
+        let HEAPBASE = 2048;
+        let HEAPMAX = 16384;
+        let HEAPSIZE = HEAPMAX - HEAPBASE;
+        let NEXT = 0;
+        let LENGTH = 1;
+
+        let ram = 0;
+        let heap = HEAPBASE;
+        let heap[NEXT] = null;
+        let heap[LENGTH] = HEAPSIZE;
+
+        return;
     }
 
     /** Returns the RAM value at the given address. */
     function int peek(int address) {
+        return ram[address];
     }
 
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
     }
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. */
+    // Alloc and dealloc I copied from
+    // https://github.com/mohanrajendran/nand2tetris/blob/master/12/MemoryTest/Memory.jack
+    // because I burned out on this course and can't do anything hard now
+    // Especially allocator algorithms, I'm tired, fuck...
     function int alloc(int size) {
+        var Array prevBlock, foundBlock;
+
+        let prevBlock = Memory.prevBestBlock(size);
+        if (prevBlock = HEAPMAX) {
+            return null;
+        }
+
+        if (prevBlock = null) {
+            let foundBlock = heap;
+            let heap = Memory.remaining(foundBlock, size);
+        } else {
+            let foundBlock = prevBlock[NEXT];
+            let prevBlock[NEXT] = Memory.remaining(foundBlock, size);
+        }
+
+        return foundBlock + 1;
     }
 
     /** De-allocates the given object (cast as an array) by making
      *  it available for future allocations. */
-    function void deAlloc(Array o) {
-    }    
+    function void deAlloc(Array object) {
+        var Array block, prevBlock;
+
+        let block = object - 1;
+        let prevBlock = Memory.prevBlock(block);
+
+        if (prevBlock = null) {
+            let block[NEXT] = heap;
+            let heap = block;
+        } else {
+            let block[NEXT] = prevBlock[NEXT];
+            let prevBlock[NEXT] = block;
+            let block = Memory.tryMerge(prevBlock, block);
+        }
+
+        do Memory.tryMerge(block, block[NEXT]);
+
+        return;
+    }
+
+    function Array prevBestBlock(int size) {
+        var Array bestBlock, prevBlock, curBlock;
+        var int bestSize, curSize;
+
+        let prevBlock = null;
+        let bestBlock = HEAPMAX;
+        let curBlock = heap;
+        let bestSize = HEAPSIZE;
+
+        while (~(curBlock = null)) {
+            let curSize = curBlock[LENGTH] - 1;
+            if (~(curSize < size) & (curSize < bestSize)) {
+                let bestBlock = prevBlock;
+                let bestSize = curSize;
+            }
+            let prevBlock = curBlock;
+            let curBlock = curBlock[NEXT];
+        }
+
+        return bestBlock;
+    }
+
+    function Array remaining(Array block, int size) {
+        var int remainingMemory;
+        var Array nextBlock;
+
+        let remainingMemory = block[LENGTH] - (size + 1);
+        if (remainingMemory < 3) {
+            return block[NEXT];
+        } else {
+            let block[LENGTH] = size;
+            let nextBlock = block + size + 1;
+            let nextBlock[LENGTH] = remainingMemory;
+            let nextBlock[NEXT] = block[NEXT];
+            return nextBlock;
+        }
+    }
+
+    function void prevBlock(Array block) {
+        var Array currentBlock;
+
+        if (heap > block) {
+            return null;
+        }
+
+        let currentBlock = heap;
+        while (~(currentBlock[NEXT] = null) & (currentBlock[NEXT] < block)) {
+            let currentBlock = currentBlock[NEXT];
+        }
+
+        return currentBlock;
+    }
+
+    function Array tryMerge(Array first, Array second) {
+        if ((first + first[LENGTH]) = second) {
+            let first[NEXT] = second[NEXT];
+            let first[LENGTH] = first[LENGTH] + second[LENGTH];
+            return first;
+        } else {
+            return second;
+        }
+    }
 }

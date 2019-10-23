@@ -588,7 +588,7 @@ impl<'a> Parser<'a> {
                     let kind = self
                         .symbol_table
                         .get_kind_of(&id)
-                        .expect("Unresolved variable name");
+                        .unwrap_or_else(|| panic!("Unresolved variable name {}", id));
 
                     let segment = match kind {
                         SymbolKind::Argument => VMSegment::Argument,
@@ -600,7 +600,7 @@ impl<'a> Parser<'a> {
                     let running_index = self
                         .symbol_table
                         .get_index_of(id)
-                        .expect("Unresolved variable name");
+                        .unwrap_or_else(|| panic!("Unresolved variable name {}", id));
 
                     if self.symbol(self.current_token) == '[' {
                         self.expect(TokenType::Symbol);
