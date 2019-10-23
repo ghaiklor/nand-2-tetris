@@ -11,54 +11,140 @@
  * string-oriented operations.
  */
 class String {
+    field int length;
+    field int capacity;
+    field Array byteArray;
 
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
+        if (maxLength < 1) {
+            let maxLength = 1;
+        }
+
+        let byteArray = Array.new(maxLength);
+        let length = 0;
+        let capacity = maxLength;
+
+        return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+        do byteArray.dispose();
+
+        return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+        return length;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+        return byteArray[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+        let byteArray[j] = c;
+        return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+        if (length < capacity) {
+            let byteArray[length] = c;
+            let length = length + 1;
+        }
+
+        return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+        if (length > 0) {
+            let length = length - 1;
+        }
+
+        return;
     }
 
-    /** Returns the integer value of this string, 
+    /** Returns the integer value of this string,
      *  until a non-digit character is detected. */
     method int intValue() {
+        var int index, result;
+        var boolean neg;
+
+        if ((length > 0) & (byteArray[0] = 45)) {
+            let neg = true;
+            let index = 1;
+        } else {
+            let neg = false;
+            let index = 0;
+        }
+
+        let result = 0;
+
+        while ((index < length) & String.isDigit(byteArray[index])) {
+            let result = result * 10 + (byteArray[index] - 48);
+            let index = index + 1;
+        }
+
+        if (neg) {
+            let result = -result;
+        }
+
+        return result;
+    }
+
+    function boolean isDigit(char c) {
+        return ((c > 47) & (c < 58));
     }
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
+        let length = 0;
+
+        if (val < 0) {
+            let val = -val;
+            do appendChar(45);
+        }
+
+        do setIntHelper(val);
+
+        return;
+    }
+
+    method void setIntHelper(int number) {
+        var int nextNum, lastDigit;
+
+        if (number < 10) {
+            do appendChar(48 + number);
+            return;
+        }
+
+        let nextNum = (number / 10);
+        let lastDigit = number - (nextNum * 10);
+        do setIntHelper(nextNum);
+        do appendChar(48 + lastDigit);
+
+        return;
     }
 
     /** Returns the new line character. */
     function char newLine() {
+        return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+        return 129;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+        return 34;
     }
 }
