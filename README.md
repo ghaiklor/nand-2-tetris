@@ -118,6 +118,9 @@ _NOTE:_
 All the materials used here are from [nand2tetris](https://www.nand2tetris.org) course.
 Which are shared by [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/) license.
 
+Also, huge thanks to [Mohan Rajendran](https://github.com/mohanrajendran/nand2tetris).
+In times, when I was struggling with implementation details, I was using his implementation as a hint.
+
 [Pong Game Demo]: https://user-images.githubusercontent.com/3625244/67093349-192b7400-f1ba-11e9-92bd-1e96c2f5c850.gif
 [Compiler Demo]: https://user-images.githubusercontent.com/3625244/67094267-26e1f900-f1bc-11e9-904a-39ea0e0576fc.gif
 [VM Translator Demo]: https://user-images.githubusercontent.com/3625244/67094699-fc447000-f1bc-11e9-8a77-357134ac244a.gif
