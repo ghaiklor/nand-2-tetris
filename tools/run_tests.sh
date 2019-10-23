@@ -16,8 +16,10 @@ COMPILER_SPEC=$PROJECT_ROOT/spec/compiler
 CPU_SPEC=$PROJECT_ROOT/spec/cpu
 HASM_SPEC=$PROJECT_ROOT/spec/hasm
 VM_SPEC=$PROJECT_ROOT/spec/vm
+OS_SPEC=$PROJECT_ROOT/spec/os
 CPU_SOURCES=$PROJECT_ROOT/src/cpu
 COMPUTER_SOURCES=$CPU_SOURCES/computer
+OS_SOURCES=$PROJECT_ROOT/src/os
 
 COMPILER_EXECUTABLE=$PROJECT_ROOT/target/debug/compiler
 HASM_EXECUTABLE=$PROJECT_ROOT/target/debug/hasm
@@ -165,10 +167,29 @@ function compiler_spec() {
     done
 }
 
+function os_spec () {
+    echo
+
+    header "Compiling $OS_SPEC"
+    for jack_file in "$OS_SPEC"/**/*.jack; do
+        "$COMPILER_EXECUTABLE" --input "$jack_file"
+        "$COMPILER_EXECUTABLE" --input "$OS_SOURCES"
+        mv "$OS_SOURCES"/*.vm "$(dirname "$jack_file")"
+        success "🙂 $(basename "$jack_file")"
+    done
+
+    header "Running tests for $OS_SPEC"
+    for tst_file in "$OS_SPEC"/**/*.tst; do
+        pending "🕰 Simulating $(basename "$tst_file")"
+        "$PROJECT_TOOLS_ROOT"/vm_emulator.sh "$tst_file" > /dev/null 2>&1
+    done
+}
+
 hasm_spec
 cpu_spec
 vm_spec
 compiler_spec
+os_spec
 
 echo
 success "All tests have been passed!"
