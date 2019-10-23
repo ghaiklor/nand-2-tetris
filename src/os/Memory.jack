@@ -130,7 +130,7 @@ class Memory {
         }
     }
 
-    function void prevBlock(Array block) {
+    function Array prevBlock(Array block) {
         var Array currentBlock;
 
         if (heap > block) {
