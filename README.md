@@ -6,8 +6,6 @@
 [![GitHub followers](https://img.shields.io/github/followers/ghaiklor.svg?label=Follow&style=social)](https://github.com/ghaiklor)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ghaiklor.svg?label=Follow&style=social)](https://twitter.com/ghaiklor)
 
-_Work is still in progress!_
-
 In this repository, I implement all the tasks from nand2tetris course on Coursera. It contains all the source codes, starting from CPU gates (implemented in HDL language) to high-level language compilers and operating systems.
 
 > Why Bother? Because many CS students don't understand how computers work; because fewer CS programs requires a compilation course; because many computer architecture courses are too detailed; because nothing beats the thrill of creating something from almost nothing; because Nand to Tetris engages students in implementing some of the coolest algorithms, data structures and techniques in applied computer science, and because the typical student feedback in Nand to Tetris courses is "the best course I ever took". (c) nand2tetris.org
